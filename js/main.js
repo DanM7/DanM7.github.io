@@ -468,18 +468,18 @@ function touchButtonFullScreenPress (thisButton) {
     // User pressed controlsFullScreen:
     if (PlayState.game.scale.isFullScreen) {
         PlayState.game.scale.stopFullScreen();
-        PlayState.game.scale.setGameSize(
-            gameWidth, 
-            gameHeight
-        );
+        // PlayState.game.scale.setGameSize(
+        //     gameWidth, 
+        //     gameHeight
+        // );
         touchButtonFullScreen.loadTexture('controlsFullScreen');
     }
     else {
         PlayState.game.scale.startFullScreen(false);
-        PlayState.game.scale.setGameSize(
-            window.screen.availWidth, 
-            window.screen.availHeight
-        );
+        // PlayState.game.scale.setGameSize(
+        //     window.screen.availWidth, 
+        //     window.screen.availHeight
+        // );
         touchButtonFullScreen.loadTexture('controlsFullScreenExit');
     }
     PlayState.game.scale.refresh();
