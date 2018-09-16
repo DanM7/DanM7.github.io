@@ -11,7 +11,7 @@ const GRAVITY = 1200;
 const controlsAlpha = 0.5;
 const controlsAlphaDown = 0.8;
 const controlsX = 10;
-const controlsAlphaCardinal = 0.5;
+//const controlsAlphaCardinal = 0.5;
 const controlWidthUD = 62;
 const controlHeightUD = 76;
 const controlWidthLR = 76;
@@ -35,7 +35,7 @@ var buttonUp;
 var buttonDown;
 var buttonLeft;
 var buttonRight;
-var controlsDPadCircle;
+//var controlsDPadCircle;
 var touchButtonA;
 var touchButtonB;
 
@@ -111,7 +111,7 @@ function Hero(game, x, y) {
     this.ledgeGrabProximity = 5;
 
     // player state:
-    this.canSlide = true;
+    this.canSlide = false; // Disable for now. See ToDo below explaining why.
     this.isCrouching = false;
     this.isJumpingSingle = false;
     this.isJumpingExtra = false;
@@ -330,57 +330,6 @@ Hero.prototype._getAnimationName = function () {
 
 // #endregion Hero
 
-// #region Enemies
-
-var enemySpeeds = { };
-enemySpeeds["spider"] = 100;
-
-function Spider(game, x, y) {
-    this.enemyType = "spider";
-
-    Phaser.Sprite.call(this, game, x, y, this.enemyType);
-
-    // anchor
-    this.anchor.set(0.5);
-    // animation
-    this.animations.add('crawl', [0, 1, 2], 8, true);
-    this.animations.add('die', [0, 4, 0, 4, 0, 4, 3, 3, 3, 3, 3, 3], 12);
-    this.animations.play('crawl');
-
-    // physic properties
-    this.game.physics.enable(this);
-    this.body.collideWorldBounds = true;
-
-    this.body.velocity.x = enemySpeeds[this.enemyType];
-
-}
-
-// inherit from Phaser.Sprite
-Spider.prototype = Object.create(Phaser.Sprite.prototype);
-Spider.prototype.constructor = Spider;
-
-function EnemyMovementSentry() {
-    // check against walls and reverse direction if necessary
-    if (this.body.touching.right || this.body.blocked.right) {
-        this.body.velocity.x = -enemySpeeds[this.enemyType]; // turn left
-    }
-    else if (this.body.touching.left || this.body.blocked.left) {
-        this.body.velocity.x = enemySpeeds[this.enemyType]; // turn right
-    }
-};
-
-Spider.prototype.update = EnemyMovementSentry;
-
-Spider.prototype.die = function () {
-    this.body.enable = false;
-
-    this.animations.play('die').onComplete.addOnce(function () {
-        this.kill();
-    }, this);
-};
-
-// #endregion Enemies
-
 // #region Loading State
 
 LoadingState = {};
@@ -404,6 +353,9 @@ LoadingState.preload = function () {
     this.game.load.image('controlsDPad', 'images/controls/flatDark/flatDark03.png');
     this.game.load.image('touchButtonA', 'images/controls/flatDark/flatDark35.png');
     this.game.load.image('touchButtonB', 'images/controls/flatDark/flatDark36.png');
+
+    this.game.load.image('controlsFullScreen', 'images/controls/flatDark/flatDark29.png');
+    this.game.load.image('controlsFullScreenExit', 'images/controls/flatDark/flatDark34.png');
 
     this.game.load.image('font:numbers', 'images/numbers.png');
 
@@ -464,83 +416,81 @@ PlayState.init = function (data) {
 };
 
 var keyUpDurationDown = null;
-var touchingDPad = false;
-var touchDPadReleased = true;
-/*
-function controlsTouchDPadDown () {
-    touchingDPad = true;
-}
-function controlsTouchDPadUp () {
-    touchingDPad = false;
-}
-function controlsTouchDPadOver () {
-    if (touchDPadReleased) {
-        touchDPadReleased = false;
-    }
-    else if (!touchDPadReleased && 
-        this.game.input.pointer1.isDown && 
-        controlsDPadCircle.input.pointerOver(1)
-    ) {
-        touchingDPad = true;
-    }
-}
-function controlsTouchDPadOut () {
-    touchingDPad = false;
-    touchDPadReleased = true;
-}
-
-function controlsButtonPress (thisButton) {
-    thisButton.alpha = controlsAlphaDown;
-    if (thisButton === buttonUp) {
-        PlayState.keys.up.isDown = true;
-        keyUpDurationDown = new Date();
-    }
-    else if (thisButton === buttonDown) {
-        PlayState.keys.down.isDown = true;
-    }
-    else if (thisButton === buttonLeft) {
-        PlayState.keys.left.isDown = true;
-    }
-    else if (thisButton === buttonRight) {
-        PlayState.keys.right.isDown = true;
-    }
-}
-
-function controlsButtonRelease (thisButton) {
-    thisButton.alpha = controlsAlpha;
-    if (thisButton === buttonUp) {
-        PlayState.keys.up.isDown = false;
-        keyUpDurationDown = null;
-    }
-    else if (thisButton === buttonDown) {
-        PlayState.keys.down.isDown = false;
-    }
-    else if (thisButton === buttonLeft) {
-        PlayState.keys.left.isDown = false;
-    }
-    else if (thisButton === buttonRight) {
-        PlayState.keys.right.isDown = false;
-    }
-}
-
-*/
 
 function touchButtonAPress (thisButton) {
     thisButton.alpha = controlsAlphaDown;
     PlayState.keys.up.isDown = true;
     keyUpDurationDown = new Date();
 }
-
 function touchButtonARelease (thisButton) {
     thisButton.alpha = controlsAlpha;
     PlayState.keys.up.isDown = false;
     keyUpDurationDown = null;
 }
 
+function touchButtonUpPress (thisButton) {
+    thisButton.alpha = controlsAlphaDown;
+    PlayState.keys.up.isDown = true;
+}
+function touchButtonUpRelease (thisButton) {
+    thisButton.alpha = controlsAlpha;
+    PlayState.keys.up.isDown = false;
+}
+
+function touchButtonDownPress (thisButton) {
+    thisButton.alpha = controlsAlphaDown;
+    PlayState.keys.down.isDown = true;
+}
+function touchButtonDownRelease (thisButton) {
+    thisButton.alpha = controlsAlpha;
+    PlayState.keys.down.isDown = false;
+}
+
+function touchButtonLeftPress (thisButton) {
+    thisButton.alpha = controlsAlphaDown;
+    PlayState.keys.left.isDown = true;
+}
+function touchButtonLeftRelease (thisButton) {
+    thisButton.alpha = controlsAlpha;
+    PlayState.keys.left.isDown = false;
+}
+
+function touchButtonRightPress (thisButton) {
+    thisButton.alpha = controlsAlphaDown;
+    PlayState.keys.right.isDown = true;
+}
+function touchButtonRightRelease (thisButton) {
+    thisButton.alpha = controlsAlpha;
+    PlayState.keys.right.isDown = false;
+}
+
+function touchButtonFullScreenPress (thisButton) {
+    // User pressed controlsFullScreen:
+    if (PlayState.game.scale.isFullScreen) {
+        PlayState.game.scale.stopFullScreen();
+        PlayState.game.scale.setGameSize(
+            gameWidth, 
+            gameHeight
+        );
+        touchButtonFullScreen.loadTexture('controlsFullScreen');
+    }
+    else {
+        PlayState.game.scale.startFullScreen(false);
+        PlayState.game.scale.setGameSize(
+            window.screen.availWidth, 
+            window.screen.availHeight
+        );
+        touchButtonFullScreen.loadTexture('controlsFullScreenExit');
+    }
+    PlayState.game.scale.refresh();
+}
+
 // Game State 3: Create (create game entities and set up world here):
 PlayState.create = function () {
     // fade in (from black)
     this.game.camera.flash('#000000');
+
+    this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     // create sound entities
     this.sfx = {
@@ -557,18 +507,6 @@ PlayState.create = function () {
     let bg = this.game.add.image(0, 0, 'background');
     bg.fixedToCamera = true;
 
-    // Draw shapes after drawing the background. That's called layering!
-    // let group = this.add.group();    
-    // let graphics = this.game.make.graphics(0, 0);
-    // graphics.lineStyle(1, 0xFF00FF, 1);
-    // // DPad circle:
-    // graphics.arc(
-    //     dPadGlobalX,
-    //     dPadGlobY,
-    //     dPadGlobalR, 0, Math.PI*2, false
-    // );
-    // group.add(graphics);
-    
     this._loadLevel(this.game.cache.getJSON(`level:${this.level}`));
 
     // create UI score boards
@@ -627,7 +565,7 @@ PlayState.update = function () {
     }
     else if (debugLevel === 4) {
         this.game.debug.inputInfo(32*2, 32*2);
-        this.game.debug.spriteInputInfo(controlsDPadCircle, 32*2, 32*5);
+        //this.game.debug.spriteInputInfo(controlsDPadCircle, 32*2, 32*5);
         this.game.debug.pointer(this.game.input.activePointer);
     }
 
@@ -824,16 +762,17 @@ PlayState._handleTouchDPadInput = function (possiblePointer) {
 PlayState._handleInput = function () {
     let xDir = 0;
 
-    PlayState.keys.up.isDown = false;
-    PlayState.keys.down.isDown = false;
-    PlayState.keys.left.isDown = false;
-    PlayState.keys.right.isDown = false;
-    if (this.game.input.pointer1.isDown) {
-        PlayState._handleTouchDPadInput(this.game.input.pointer1);
-    }
-    if (this.game.input.pointer2.isDown) {
-        PlayState._handleTouchDPadInput(this.game.input.pointer2);
-    }
+    // PlayState.keys.up.isDown = false;
+    // PlayState.keys.down.isDown = false;
+    // PlayState.keys.left.isDown = false;
+    // PlayState.keys.right.isDown = false;
+
+    // if (this.game.input.pointer1.isDown) {
+    //     PlayState._handleTouchDPadInput(this.game.input.pointer1);
+    // }
+    // if (this.game.input.pointer2.isDown) {
+    //     PlayState._handleTouchDPadInput(this.game.input.pointer2);
+    // }
     
     let heroCanMove = !this.hero.isLedgeGrabbing && !this.hero.isWallJumpPauseL && !this.hero.isWallJumpPauseR;
     if (this.keys.right.isDown) {
@@ -941,7 +880,11 @@ PlayState._handleInput = function () {
         }
     }
     else {
-        this.hero.canSlide = true;
+        // ToDo: disable the ability to slide for now.
+        // Sliding should happen if the user presses the down key
+        // after either just releasing left/right or sliding 
+        // (not releasing their left thumb) from L/R to down.
+        //this.hero.canSlide = true;
     }
 
     if (!this.hero.isSliding) {
@@ -1313,53 +1256,77 @@ PlayState._createHud = function () {
     
     this.hud = this.game.add.group();
 
+    let directionButtonsSpacingX = 20;
+
     buttonUp = this.game.add.sprite(
-        buttonUpX, buttonUpY + 1//, 'controlsUp'
+        buttonUpX + directionButtonsSpacingX, 
+        buttonUpY + 1//, 'controlsUp'
     );
     buttonDown = this.game.add.sprite(
-        buttonUpX + 1, 
+        buttonUpX + 1 + directionButtonsSpacingX, 
         buttonUpY + controlHeightUD + 2, 
         'controlsDown'
     );
+    buttonDown.events.onInputDown.add(touchButtonDownPress, this);
+    buttonDown.events.onInputUp.add(touchButtonDownRelease, this);
+
     buttonLeft = this.game.add.sprite(
-        controlsX + 4, buttonUpY + controlHeightUD/2 + controlsPad - 1, 'controlsLeft'
+        controlsX + 4, 
+        buttonUpY + controlHeightUD/2 + controlsPad - 1, 
+        'controlsLeft'
     );
+    buttonLeft.events.onInputDown.add(touchButtonLeftPress, this);
+    buttonLeft.events.onInputUp.add(touchButtonLeftRelease, this);
+
     buttonRight = this.game.add.sprite(
-        buttonLeft.x + controlWidthLR - 1, // -3 or -1
+        buttonLeft.x + controlWidthLR - 1 + 2*directionButtonsSpacingX, // -3 or -1
         buttonLeft.y, 
         'controlsRight'
     );
-    controlsDPadCircle = this.game.add.sprite(
-        buttonUpX + 31, buttonUpY - 36//, 'controlsPadCircle'
-    );
-    controlsDPadCircle.inputEnabled = true;
-    controlsDPadCircle.alpha = 0.7;
-    controlsDPadCircle.angle= 45; // angle of 0 draw at (-51,0); angle of 45 draw at (31,31);
+    buttonRight.events.onInputDown.add(touchButtonRightPress, this);
+    buttonRight.events.onInputUp.add(touchButtonRightRelease, this);
+
+    // controlsDPadCircle = this.game.add.sprite(
+    //     buttonUpX + 31, buttonUpY - 36//, 'controlsPadCircle'
+    // );
+    // controlsDPadCircle.inputEnabled = true;
+    // controlsDPadCircle.alpha = 0.7;
+    // controlsDPadCircle.angle= 45; // angle of 0 draw at (-51,0); angle of 45 draw at (31,31);
     
     touchButtonA = this.game.add.sprite(
         gameWidth - 120,
         gameHeight - 120,
         'touchButtonA'
     );
-    touchButtonA.alpha = 0.5;
-    touchButtonA.inputEnabled = true;
+    //touchButtonA.alpha = 0.5;
+    //touchButtonA.inputEnabled = true;
     touchButtonA.events.onInputDown.add(touchButtonAPress, this);
     touchButtonA.events.onInputUp.add(touchButtonARelease, this);
 
+    touchButtonFullScreen = this.game.add.sprite(
+        gameWidth - 70,
+        10,
+        'controlsFullScreen'
+    );
+    touchButtonFullScreen.events.onInputDown.add(touchButtonFullScreenPress, this);
+
     let controlButtons = [
+        touchButtonA,
+        touchButtonFullScreen,
         buttonUp,
         buttonDown, 
         buttonLeft,
         buttonRight
     ];
     controlButtons.forEach(function(controlButton) {
-        controlButton.alpha = controlsAlphaCardinal;
+        controlButton.inputEnabled = true;
+        controlButton.alpha = controlsAlpha;
         PlayState.hud.add(controlButton);
     });
 
-    this.hud.add(controlsDPadCircle);
+    //this.hud.add(controlsDPadCircle);
     
-    this.hud.add(touchButtonA);
+    //this.hud.add(touchButtonA);
 
     this.hud.add(coinIcon);
     this.hud.add(coinScoreImg);
@@ -1387,6 +1354,8 @@ window.onload = function () {
     game.state.start('loading');
 
     // ToDO: Mobile:
-    //if (!game.device.desktop){ game.input.onDown.add(gofull, this); } //go fullscreen on mobile devices
+    //if (!game.device.desktop) { 
+        //game.input.onDown.add(gofull, this); 
+    //} //go fullscreen on mobile devices
     
 };
