@@ -1,0 +1,34 @@
+{
+    "maze": {
+        "level": 1,
+        "pathWidth": 160,
+        "width": 3,
+        "height": 6
+    },
+
+    "hero": {
+        "id": 1,
+        "pos": "farthest"
+    },
+
+    "door": {
+        "id": 1,
+        "pos": "random",
+        
+        "nextLevelIncrement": 0    
+    },
+
+    "food": {
+        "pos": "random",
+    
+        "powerUp": "stamina",
+        "powerUpRange": "random",
+        "powerUpMin": 1,
+        "powerUpMax": 3
+    },
+
+    "key": {
+        "doorId": 1,
+        "pos": "farthest"
+    }
+}
