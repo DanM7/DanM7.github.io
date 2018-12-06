@@ -1,2 +1,2 @@
 # Stormbury
-Stormbury Rebellion
+Stormbury
