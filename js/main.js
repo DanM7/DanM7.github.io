@@ -341,10 +341,13 @@ LoadingState.init = function () {
 
 // Game State 2: Preload (load game assets here):
 LoadingState.preload = function () {
+    // Level data:
     this.game.load.json('level:0', 'data/level00.json');
     this.game.load.json('level:1', 'data/level01.json');
     this.game.load.json('level:2', 'data/level02.json');
+    this.game.load.json('level:3', 'data/maze001.json');
 
+    // Controls:
     this.game.load.image('controlsUp', 'images/controls/flatDark/flatDark02.png');
     this.game.load.image('controlsDown', 'images/controls/flatDark/flatDark09.png');
     this.game.load.image('controlsLeft', 'images/controls/flatDark/flatDark04.png');
@@ -353,12 +356,14 @@ LoadingState.preload = function () {
     this.game.load.image('controlsDPad', 'images/controls/flatDark/flatDark03.png');
     this.game.load.image('touchButtonA', 'images/controls/flatDark/flatDark35.png');
     this.game.load.image('touchButtonB', 'images/controls/flatDark/flatDark36.png');
-
     this.game.load.image('controlsFullScreen', 'images/controls/flatDark/flatDark29.png');
     this.game.load.image('controlsFullScreenExit', 'images/controls/flatDark/flatDark34.png');
 
+    // Fonts:
     this.game.load.image('font:numbers', 'images/numbers.png');
 
+    // Items:
+    this.game.load.spritesheet('items001', 'images/items/items001.png', 48, 48, 16, 16)
     this.game.load.image('icon:coin', 'images/coin_icon.png');
     this.game.load.image('background', 'images/background.png');
     this.game.load.image('invisible-wall', 'images/invisible_wall.png');
@@ -383,7 +388,7 @@ LoadingState.preload = function () {
 };
 
 LoadingState.create = function () {
-    this.game.state.start('play', true, false, {level: 2});
+    this.game.state.start('play', true, false, {level: 3});
 };
 
 // #endregion Loading State
@@ -394,7 +399,7 @@ PlayState = {};
 
 // Restart the game once we reach this many levels:
 // TRY: Get this from JSON files.
-const LEVEL_COUNT = 2;
+var LEVEL_COUNT = 999;
 
 var button;
 
@@ -412,6 +417,9 @@ PlayState.init = function (data) {
 
     this.coinPickupCount = 0;
     this.hasKey = false;
+
+    this.hasCheese = false;
+
     this.level = (data.level <= LEVEL_COUNT) ? data.level : 0;
 };
 
@@ -465,21 +473,45 @@ function touchButtonRightRelease (thisButton) {
 }
 
 function touchButtonFullScreenPress (thisButton) {
+    try
+    {
+        var doc = window.document;
+        var docEl = doc.documentElement;
+    
+        var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+        var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+    
+        if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+        requestFullScreen.call(docEl);
+        touchButtonFullScreen.loadTexture('controlsFullScreenExit');
+        }
+        else {
+        cancelFullScreen.call(doc);
+        touchButtonFullScreen.loadTexture('controlsFullScreen');
+        }
+    }
+    catch (ex)
+    {
+        alert(ex);
+    }
+}
+
+function touchButtonFullScreenPress_Old (thisButton) {
     // User pressed controlsFullScreen:
     if (PlayState.game.scale.isFullScreen) {
         PlayState.game.scale.stopFullScreen();
-        // PlayState.game.scale.setGameSize(
-        //     gameWidth, 
-        //     gameHeight
-        // );
+        PlayState.game.scale.setGameSize(
+            gameWidth, 
+            gameHeight
+        );
         touchButtonFullScreen.loadTexture('controlsFullScreen');
     }
     else {
         PlayState.game.scale.startFullScreen(false);
-        // PlayState.game.scale.setGameSize(
-        //     window.screen.availWidth, 
-        //     window.screen.availHeight
-        // );
+        PlayState.game.scale.setGameSize(
+            window.screen.availWidth, 
+            window.screen.availHeight
+        );
         touchButtonFullScreen.loadTexture('controlsFullScreenExit');
     }
     PlayState.game.scale.refresh();
@@ -507,6 +539,15 @@ PlayState.create = function () {
     let bg = this.game.add.image(0, 0, 'background');
     bg.fixedToCamera = true;
 
+    // ToDo: something other than the json load needs to determine if
+    // the level is an actual level or a maze. For that matter, there needs
+    // to be some initial json load that says what json should be loaded next. 
+    // if (this.game.data.maze) {
+    //     this._loadLevel(this.game.cache.getJSON(`maze:${this.level}`));
+    // }
+    // else {
+    //     this._loadLevel(this.game.cache.getJSON(`level:${this.level}`));
+    // }
     this._loadLevel(this.game.cache.getJSON(`level:${this.level}`));
 
     // create UI score boards
@@ -617,11 +658,11 @@ PlayState._handleCollisions = function () {
     // }
 
     // hero vs coins (pick up)
-    this.game.physics.arcade.overlap(this.hero, this.coins, this._onHeroVsCoin,
-        null, this);
+    this.game.physics.arcade.overlap(this.hero, this.coins, this._onHeroVsCoin, null, this);
+
     // hero vs key (pick up)
-    this.game.physics.arcade.overlap(this.hero, this.key, this._onHeroVsKey,
-        null, this);
+    this.game.physics.arcade.overlap(this.hero, this.key, this._onHeroVsKey, null, this);
+
     // hero vs door (end level)
     this.game.physics.arcade.overlap(this.hero, this.door, this._onHeroVsDoor,
         // ignore if there is no key or the player is on air
@@ -631,7 +672,15 @@ PlayState._handleCollisions = function () {
         //   and you could just fall into that (so the only req is `hasKey`).
         function (hero, door) {
             return this.hasKey && hero.touchingDownCount > 0;
-        }, this);
+        }, this
+    );
+
+    this.itemsFood.forEach(function (food) {
+        this.game.physics.arcade.collide(this.hero, food
+            , this._onHeroCollisionWithFood, null, null
+        );
+    }, this);
+
     // collision: hero vs enemies (kill or die)
     this.game.physics.arcade.overlap(this.hero, this.spiders,
         this._onHeroVsEnemy, null, this);
@@ -894,6 +943,13 @@ PlayState._handleInput = function () {
 
 var abs=Math.abs;
 
+PlayState._onHeroCollisionWithFood = function (hero, food) {
+    this.sfx.key.play(); // ToDo: get a "chomp" chewing sound;
+    food.kill();
+    // ToDo: increment health;
+    //   Does each food item have its own health increment value?
+};
+
 PlayState._onHeroCollisionWithLand = function (hero, land) {
     // ToDo: add properties for land to be wall-jumpable or ledge-grabbable!
     // boundary walls (like in a room) could then be made up of tiles that are not
@@ -1056,7 +1112,12 @@ PlayState._onHeroVsEnemy = function (hero, enemy) {
     }
 };
 
+// By default, we go to the next level.
+var nextLevelIncrement = 1;
+
 PlayState._onHeroVsDoor = function (hero, door) {
+    nextLevelIncrement = (typeof door.nextLevelIncrement !== 'undefined') ? door.nextLevelIncrement : 1;
+
     // 'open' the door by changing its graphic and playing a sfx
     door.frame = 1;
     this.sfx.door.play();
@@ -1075,40 +1136,175 @@ PlayState._goToNextLevel = function () {
         // TRY: get the "+ 1" as a param from the door.
         //   Ex: Secret exits could take you two levels ahead and would be "+ 2".
         this.game.state.restart(true, false, {
-            level: this.level + 1
+            level: this.level + nextLevelIncrement
         });
     }, this);
 };
 
-PlayState._loadLevel = function (data) {
-    // Create all the groups/layers that we need (in order, for layering):
-    
-    this.bgDecoration = this.game.add.group();
-    this.platforms = this.game.add.group();
-    this.coins = this.game.add.group();
-    this.spiders = this.game.add.group();
-    
-    this.landscape = this.game.add.group();
-    this.landscapeBounds = this.game.add.group();
-        
-    this.enemyWalls = this.game.add.group();
-    this.enemyWalls.visible = false;
+function LightenDarkenColor(col,amt) {
+    var num = parseInt(col,16);
+    var r = (num >> 16) + amt;
+    var b = ((num >> 8) & 0x00FF) + amt;
+    var g = (num & 0x0000FF) + amt;
+    var newColor = g | (b << 8) | (r << 16);
+    return parseInt(newColor.toString(16), 16);
+}
 
+PlayState._setMazeDataFromJson = function (data) {
+    let pathWidth = (data.maze.pathWidth) ? data.maze.pathWidth : 128; // Width of the maze path;
+    let width = (data.maze.width) ? data.maze.width : 3; // Game width;
+    let height = (data.maze.height) ? data.maze.height : 2; // Game height;
+    let wall = pathWidth; // Width of the walls between paths;    
+    let boundW = (pathWidth * width * 2) + (pathWidth * 3);
+    let boundH = (pathWidth * height * 2) + (pathWidth * 3);
+    this.game.world.setBounds(0, 0, boundW, boundH);
+    
+    var graphics = this.game.add.graphics(0, 0);
+
+    // set a fill and line style
+    let randomColor = Math.random() * 0xffffff;
+    let randomColorShade = LightenDarkenColor(randomColor, 20);
+    graphics.beginFill(randomColor);
+
+    let includeBorder = true;
+    let mapBounds = MAZE.buildMap(width, height, includeBorder);
+    let boundingBoxes = MAZE.buildBoundingBoxes(mapBounds, wall);
+    boundingBoxes.forEach(function (bbox) {
+        var landItemBound = this.game.add.sprite(bbox.x, bbox.y);
+        landItemBound.width = bbox.w;
+        landItemBound.height = bbox.h;
+        this.game.physics.enable(landItemBound);
+        landItemBound.body.allowGravity = false;
+        landItemBound.body.immovable = true;
+
+        // ToDo: determine these dynamically:
+        landItemBound.grab = false;
+        landItemBound.wallJump = true;
+        
+        //landItemBound.tint = Math.random() * 0xffffff;
+        //this.game.debug.body(landItemBound);
+        graphics.lineStyle(4, randomColorShade, 1);
+        graphics.drawRect(bbox.x, bbox.y, bbox.w, bbox.h);
+
+        this.landscapeBounds.add(landItemBound);
+    }, this);
+
+    //this.itemsFood = this.game.add.group();
+    this["itemsFood"] = this.game.add.group();
+    // data.itemsFood.forEach(function (food) {
+    //     this.itemsFood.add(
+    //         this.game.add.image(food.x, food.y, 'food', food.frame)
+    //     );
+    // }, this);
+
+    //#region Door
+    let initialDoorX = 0;
+    let initialDoorY = 0;
+    let mapPosDoorX = 0;
+    let mapPosDoorY = 0;
+    let nodesWithWallUnderneath = null;
+
+    if (
+        (data.door.pos && data.door.pos === "fixed") ||
+        (data.door.x || data.door.y || data.door.x32 || data.door.y32)
+    ) {
+        initialDoorX = data.door.x;
+        initialDoorY = data.door.y;
+    }
+    else if (data.door.pos && data.door.pos === "random") {
+        nodesWithWallUnderneath = MAZE.getNodesWithWallUnderneath(mapBounds);
+
+        // The space 1 below (move 0 x spaces, move down 1 y space) needs to be a wall:
+        let requireBorderUnderneath = [ { "x": 0, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL } ];
+        let freeSpace = MAZE.getRandomSpaceByValue(mapBounds, MAZE.MAP_SPACE_FREE, requireBorderUnderneath);
+        mapPosDoorX = freeSpace.columnIndex;
+        mapPosDoorY = freeSpace.rowIndex;
+        initialDoorX = mapPosDoorX*pathWidth + (pathWidth/2);
+        initialDoorY = mapPosDoorY*pathWidth + (pathWidth);
+    }
+    
+    this._spawnDoor(initialDoorX, initialDoorY, data.door);
+    //#endregion Door
+    
+    //#region Key
+    let initialKeyX = 0;
+    let initialKeyY = 0;
+    let mapPosKeyX = 0;
+    let mapPosKeyY = 0;
+    if (
+        (data.key.pos && data.key.pos === "fixed") ||
+        (data.key.x || data.key.y || data.key.x32 || data.key.y32)
+    ) {
+        initialKeyX = data.key.x;
+        initialKeyY = data.key.y;
+    }
+    else if (data.key.pos && data.key.pos === "random") {
+        let freeSpace = MAZE.getRandomSpaceByValue(mapBounds, 0);
+        initialKeyX = freeSpace.columnIndex*pathWidth + (pathWidth/2);
+        initialKeyY = freeSpace.rowIndex*pathWidth + (pathWidth/2);
+    }
+    else if (data.key.pos && data.key.pos === "farthest") {
+        let aStarResult = MAZE.getFarthestFreeSpace(
+            mapBounds, 
+            new GridNode(mapPosDoorX, mapPosDoorY, MAZE.MAP_SPACE_FREE)
+        );
+        // The astar lib off of github swaps the x and y on the nodes;
+        // this corrects that by assigning x to the key's y and y to the key's x:
+        mapPosKeyX = aStarResult.y;
+        mapPosKeyY = aStarResult.x;
+        
+        initialKeyX = mapPosKeyX*pathWidth + (pathWidth/2);
+        initialKeyY = mapPosKeyY*pathWidth + (pathWidth/2);
+    }
+    this._spawnKey(initialKeyX, initialKeyY);
+    //#endregion Key
+    
+    //#region Hero
+    let initialHeroX = 0;
+    let initialHeroY = 0;
+    if (
+        (data.hero.pos && data.hero.pos === "fixed") ||
+        (data.hero.x || data.hero.y || data.hero.x32 || data.hero.y32)
+    ) {
+        initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * 32 : data.hero.x);
+        initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * 32 : data.hero.y);
+    }
+    else if (data.hero.pos && data.hero.pos === "random") {
+        let requireBorderUnderneath = [ { "x": 0, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL } ];
+        let freeSpace = MAZE.getRandomSpaceByValue(mapBounds, MAZE.MAP_SPACE_FREE, requireBorderUnderneath);
+        initialHeroX = freeSpace.columnIndex*pathWidth + (pathWidth/2);
+        initialHeroY = freeSpace.rowIndex*pathWidth + (pathWidth/4);
+    }
+    else if (data.hero.pos && data.hero.pos === "farthest") {
+        if (nodesWithWallUnderneath === null) {
+            nodesWithWallUnderneath = MAZE.getNodesWithWallUnderneath(mapBounds);
+        }
+        let heroNode = MAZE.getFarthestFreeSpaceTriangle(
+            mapBounds,
+            new GridNode(mapPosDoorX, mapPosDoorY, MAZE.MAP_SPACE_FREE),
+            new GridNode(mapPosKeyX, mapPosKeyY, MAZE.MAP_SPACE_FREE),
+            nodesWithWallUnderneath
+        );
+        initialHeroX = heroNode.y*pathWidth + (pathWidth/2);
+        initialHeroY = heroNode.x*pathWidth + (pathWidth/4);
+    }
+    this.hero = new Hero(this.game, initialHeroX, initialHeroY);
+    //#endregion Hero
+    
+    this.game.add.existing(this.hero);
+};
+
+// Gets a random number within (inclusive) the input min and max:
+function randomIntFromIntervalInclusive(min, max) {
+    return Math.floor(Math.random()*(max-min+1)+min);
+};
+
+PlayState._setLevelDataFromJson = function (data) {
     let boundW = (data.world.w < gameWidth) ? gameWidth : data.world.w;
     let boundH = (data.world.h < gameHeight) ? gameHeight : data.world.h;
     this.game.world.setBounds(0, 0, boundW, boundH);
 
-    // spawn hero and enemies
-    this._spawnCharacters({hero: data.hero, spiders: data.spiders});
-
-    // spawn level decoration
-    data.decoration.forEach(function (deco) {
-        this.bgDecoration.add(
-            this.game.add.image(deco.x, deco.y, 'decoration', deco.frame));
-        }
-    , this);
-    
-    // spawn level decoration
+    // spawn level landscape:
     data.landscape.forEach(function (land) {
         var rXTotal = (land.repeatX || 0);
         var rYTotal = (land.repeatY || 0);
@@ -1150,13 +1346,53 @@ PlayState._loadLevel = function (data) {
 
     }, this);
 
-    // spawn platforms
-    data.platforms.forEach(this._spawnPlatform, this);
-
-    // spawn important objects
-    data.coins.forEach(this._spawnCoin, this);
     this._spawnKey(data.key.x, data.key.y);
     this._spawnDoor(data.door.x, data.door.y);
+
+    // spawn hero
+    let initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * 32 : data.hero.x);
+    let initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * 32 : data.hero.y);
+    this.hero = new Hero(this.game, initialHeroX, initialHeroY);
+    this.game.add.existing(this.hero);
+};
+
+PlayState._loadLevel = function (data) {
+
+    // Create all the groups/layers that we need (in order, for layering):    
+    this.platforms = this.game.add.group();
+    this.coins = this.game.add.group();
+    this.spiders = this.game.add.group();    
+    this.landscape = this.game.add.group();
+    this.landscapeBounds = this.game.add.group();
+    this.enemyWalls = this.game.add.group();
+    this.enemyWalls.visible = false;
+
+    this.bgDecoration = this.game.add.group();
+    
+    if (data.maze) {
+        this._setMazeDataFromJson(data);
+    }
+    else {
+        // spawn platforms
+        data.platforms.forEach(this._spawnPlatform, this);
+
+        // spawn level decoration
+        data.decoration.forEach(function (deco) {
+            this.bgDecoration.add(
+                this.game.add.image(deco.x, deco.y, 'decoration', deco.frame)
+            );
+        }, this);
+
+        this._setLevelDataFromJson(data);
+    }
+    
+    // spawn hero and enemies
+    this._spawnCharacters({hero: data.hero, spiders: data.spiders});
+
+    // spawn important objects
+    if (data.coins) {
+        data.coins.forEach(this._spawnCoin, this);
+    }
 
     // enable gravity
     this.game.physics.arcade.gravity.y = GRAVITY;
@@ -1166,16 +1402,12 @@ PlayState._loadLevel = function (data) {
 
 PlayState._spawnCharacters = function (data) {
     // spawn spiders
-    data.spiders.forEach(function (spider) {
-        let sprite = new Spider(this.game, spider.x, spider.y);
-        this.spiders.add(sprite);
-    }, this);
-
-    // spawn hero
-    let initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * 32 : data.hero.x);
-    let initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * 32 : data.hero.y);
-    this.hero = new Hero(this.game, initialHeroX, initialHeroY);
-    this.game.add.existing(this.hero);
+    if (data.spiders) {
+        data.spiders.forEach(function (spider) {
+            let sprite = new Spider(this.game, spider.x, spider.y);
+            this.spiders.add(sprite);
+        }, this);
+    }
 };
 
 PlayState._spawnPlatform = function (platform) {
@@ -1234,11 +1466,16 @@ PlayState._spawnKey = function (x, y) {
         .start();
 };
 
-PlayState._spawnDoor = function (x, y) {
+PlayState._spawnDoor = function (x, y, doorData) {
     this.door = this.bgDecoration.create(x, y, 'door');
     this.door.anchor.setTo(0.5, 1);
     this.game.physics.enable(this.door);
     this.door.body.allowGravity = false;
+    if (typeof doorData !== 'undefined') {
+        if (typeof doorData.nextLevelIncrement !== 'undefined') {
+            this.door.nextLevelIncrement = doorData.nextLevelIncrement;
+        }
+    }
 };
 
 PlayState._createHud = function () {
@@ -1337,6 +1574,25 @@ PlayState._createHud = function () {
 };
 
 // #endregion Play State
+
+function shadeColor2(color, percent) {   
+    var f = parseInt(color, 16),
+        t=percent<0?0:255,
+        p=percent<0?percent*-1:percent,
+        R=f>>16,
+        G=f>>8&0x00FF,
+        B=f&0x0000FF;
+    let newR = 0x010000 * (Math.round((t-R)*p)+R);
+    let newG = 0x000100 * (Math.round((t-G)*p)+G);
+    let newB = 0x000001 * (Math.round((t-B)*p)+B);
+    return (
+        0x1000000 + 
+        (Math.round((t-R)*p)+R)*0x10000 + 
+        (Math.round((t-G)*p)+G)*0x100 + 
+        (Math.round((t-B)*p)+B)
+    );
+    //return (newR + newG + newB);
+}
 
 window.onload = function () {
     if (sourceMobile) {
