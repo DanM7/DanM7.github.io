@@ -20,8 +20,8 @@ const screenPad = 20;
 const controlsPad = 10;
 
 let sourceMobile = false;
-let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
-let gameHeight = window.innerHeight - 40;
+let gameWidth = (window.innerWidth > 41) ? window.innerWidth - 40 : 500; // window.visualViewport.width or window.innerWidth?
+let gameHeight = (window.innerHeight > 41) ? window.innerHeight - 40 : 700;
 
 let keyPressToggleD = true;
 
@@ -1566,9 +1566,9 @@ PlayState._createHud = function () {
 
     //#endregion Top Right
     
-    // debugText1 = 
-    //     "Game: (" + gameWidth + "," + gameHeight + "); " + 
-    //     "DPad: (" + buttonUpX + "," + buttonUpY + ")";
+    debugText1 = 
+        "Game: (" + gameWidth + "," + gameHeight + "); " + 
+        "DPad: (" + buttonUpX + "," + buttonUpY + ")";
 
     debugLabel1 = this.game.add.text(32*6, 32*0.2, debugText1, 
         { font: "18px Courier New", fill: "#000000", align: "center" });
