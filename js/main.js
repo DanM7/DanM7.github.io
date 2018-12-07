@@ -20,8 +20,8 @@ const screenPad = 20;
 const controlsPad = 10;
 
 let sourceMobile = false;
-let gameWidth = (window.innerWidth > 41) ? window.innerWidth - 40 : 500; // window.visualViewport.width or window.innerWidth?
-let gameHeight = (window.innerHeight > 41) ? window.innerHeight - 40 : 700;
+let gameWidth = window.visualViewport.width - 40; // window.visualViewport.width or window.innerWidth?
+let gameHeight = window.visualViewport.height - 40;
 
 let keyPressToggleD = true;
 
@@ -363,7 +363,7 @@ LoadingState.preload = function () {
     this.game.load.image('font:numbers', 'images/numbers.png');
 
     // Items:
-    this.game.load.spritesheet('items001', 'images/items/items001.png', 48, 48, 16, 16)
+    //this.game.load.spritesheet('items001', 'images/items/items001.png', 48, 48, 16, 16)
     this.game.load.image('icon:coin', 'images/coin_icon.png');
     this.game.load.image('background', 'images/background.png');
     this.game.load.image('invisible-wall', 'images/invisible_wall.png');
@@ -1566,9 +1566,9 @@ PlayState._createHud = function () {
 
     //#endregion Top Right
     
-    debugText1 = 
-        "Game: (" + gameWidth + "," + gameHeight + "); " + 
-        "DPad: (" + buttonUpX + "," + buttonUpY + ")";
+    // debugText1 = 
+    //     "Game: (" + gameWidth + "," + gameHeight + "); " + 
+    //     "DPad: (" + buttonUpX + "," + buttonUpY + ")";
 
     debugLabel1 = this.game.add.text(32*6, 32*0.2, debugText1, 
         { font: "18px Courier New", fill: "#000000", align: "center" });
