@@ -20,8 +20,8 @@ const screenPad = 20;
 const controlsPad = 10;
 
 let sourceMobile = false;
-let gameWidth = window.visualViewport.width - 40; // window.visualViewport.width or window.innerWidth?
-let gameHeight = window.visualViewport.height - 40;
+let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
+let gameHeight = window.innerHeight - 40;
 
 let keyPressToggleD = true;
 
