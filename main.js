@@ -20,8 +20,8 @@ const screenPad = 20;
 const controlsPad = 10;
 
 let sourceMobile = false;
-let gameWidth = (window.innerWidth > 41) ? window.innerWidth - 40 : 500;
-let gameHeight = (window.innerHeight > 41) ? window.innerHeight - 40 : 700;
+let gameWidth = window.visualViewport.width - 40; // window.visualViewport.width or window.innerWidth?
+let gameHeight = window.visualViewport.height - 40;
 
 let keyPressToggleD = true;
 
@@ -552,11 +552,6 @@ PlayState.create = function () {
 
     // create UI score boards
     this._createHud();
-
-    debugLabel1 = this.game.add.text(32*6, 32*0.2, debugText1, 
-        { font: "18px Courier New", fill: "#000000", align: "center" });
-    debugLabel2 = this.game.add.text(32*6, 32*0.8, debugTextKeyD, 
-        { font: "18px Courier New", fill: "#000000", align: "center" });
 };
 
 function padLeft(number, width, padInput) {
@@ -1479,6 +1474,13 @@ PlayState._spawnDoor = function (x, y, doorData) {
 };
 
 PlayState._createHud = function () {
+
+    this.hud = this.game.add.group();
+
+    let directionButtonsSpacingX = 20;
+
+    //#region Upper Left
+    
     const NUMBERS_STR = '0123456789X ';
     this.coinFont = this.game.add.retroFont('font:numbers', 20, 26,
         NUMBERS_STR, 6);
@@ -1491,14 +1493,15 @@ PlayState._createHud = function () {
         coinIcon.height / 2, this.coinFont);
     coinScoreImg.anchor.set(0, 0.5);
     
-    this.hud = this.game.add.group();
+    //#endregion Upper Left
 
-    let directionButtonsSpacingX = 20;
-
+    //#region Bottom Left
+    
     buttonUp = this.game.add.sprite(
         buttonUpX + directionButtonsSpacingX, 
         buttonUpY + 1//, 'controlsUp'
     );
+
     buttonDown = this.game.add.sprite(
         buttonUpX + 1 + directionButtonsSpacingX, 
         buttonUpY + controlHeightUD + 2, 
@@ -1523,23 +1526,23 @@ PlayState._createHud = function () {
     buttonRight.events.onInputDown.add(touchButtonRightPress, this);
     buttonRight.events.onInputUp.add(touchButtonRightRelease, this);
 
-    // controlsDPadCircle = this.game.add.sprite(
-    //     buttonUpX + 31, buttonUpY - 36//, 'controlsPadCircle'
-    // );
-    // controlsDPadCircle.inputEnabled = true;
-    // controlsDPadCircle.alpha = 0.7;
-    // controlsDPadCircle.angle= 45; // angle of 0 draw at (-51,0); angle of 45 draw at (31,31);
+    //#endregion Bottom Left
     
+    //#region Bottom Right
+
     touchButtonA = this.game.add.sprite(
         gameWidth - 120,
         gameHeight - 120,
         'touchButtonA'
     );
-    //touchButtonA.alpha = 0.5;
-    //touchButtonA.inputEnabled = true;
+    
     touchButtonA.events.onInputDown.add(touchButtonAPress, this);
     touchButtonA.events.onInputUp.add(touchButtonARelease, this);
 
+    //#endregion Bottom Right
+    
+    //#region Top Right
+    
     touchButtonFullScreen = this.game.add.sprite(
         gameWidth - 70,
         10,
@@ -1561,9 +1564,19 @@ PlayState._createHud = function () {
         PlayState.hud.add(controlButton);
     });
 
-    //this.hud.add(controlsDPadCircle);
+    //#endregion Top Right
     
-    //this.hud.add(touchButtonA);
+    // debugText1 = 
+    //     "Game: (" + gameWidth + "," + gameHeight + "); " + 
+    //     "DPad: (" + buttonUpX + "," + buttonUpY + ")";
+
+    debugLabel1 = this.game.add.text(32*6, 32*0.2, debugText1, 
+        { font: "18px Courier New", fill: "#000000", align: "center" });
+    debugLabel2 = this.game.add.text(32*6, 32*0.8, debugTextKeyD, 
+        { font: "18px Courier New", fill: "#000000", align: "center" });
+
+    this.hud.add(debugLabel1);
+    this.hud.add(debugLabel2);
 
     this.hud.add(coinIcon);
     this.hud.add(coinScoreImg);
@@ -1595,10 +1608,10 @@ function shadeColor2(color, percent) {
 }
 
 window.onload = function () {
-    if (sourceMobile) {
-        gameWidth = 1136;
-        gameHeight = 640;
-    }
+    // if (sourceMobile) {
+    //     gameWidth = 1136;
+    //     gameHeight = 640;
+    // }
     let game = new Phaser.Game(
         gameWidth, 
         gameHeight, 
