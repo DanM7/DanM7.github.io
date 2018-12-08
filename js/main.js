@@ -37,6 +37,9 @@ let debugText1 = "";
 let debugLabel2;
 let debugTextKeyD = "";//"Keys: Up=n; Down=n; Left=n; Right=n; D=n; Debug=" + (debugLevel>0 ? "y" : "n") + ";";
 
+let debugLabelFps;
+let debugTextFps;
+
 var buttonUp;
 var buttonDown;
 var buttonLeft;
@@ -481,6 +484,27 @@ function touchButtonRightRelease (thisButton) {
 function touchButtonFullScreenPress (thisButton) {
     try
     {
+        // Maintain aspect ratio
+        PlayState.game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+
+        if (PlayState.game.scale.isFullScreen) {
+            PlayState.game.scale.stopFullScreen();
+            touchButtonFullScreen.loadTexture('controlsFullScreen');
+        } 
+        else {
+            PlayState.game.scale.startFullScreen(false);
+            touchButtonFullScreen.loadTexture('controlsFullScreenExit');
+        }
+    }
+    catch (ex)
+    {
+        alert(ex);
+    }
+}
+
+function touchButtonFullScreenPress2 (thisButton) {
+    try
+    {
         var doc = window.document;
         var docEl = doc.documentElement;
     
@@ -488,12 +512,12 @@ function touchButtonFullScreenPress (thisButton) {
         var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
     
         if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
-        requestFullScreen.call(docEl);
-        touchButtonFullScreen.loadTexture('controlsFullScreenExit');
+            requestFullScreen.call(docEl);
+            touchButtonFullScreen.loadTexture('controlsFullScreenExit');
         }
         else {
-        cancelFullScreen.call(doc);
-        touchButtonFullScreen.loadTexture('controlsFullScreen');
+            cancelFullScreen.call(doc);
+            touchButtonFullScreen.loadTexture('controlsFullScreen');
         }
     }
     catch (ex)
@@ -568,11 +592,22 @@ function padLeft(number, width, padInput) {
         number + ""; // always return a string
 }
 
+var lastLoop = new Date();
+
+function getFps(thisLoop, lastLoop) {
+    return (1000 / (thisLoop - lastLoop))|0;
+}
+
 // Game State 4: Update
 PlayState.update = function () {
+    var thisLoop = new Date();
+    let fps = getFps(thisLoop, lastLoop);
+    lastLoop = thisLoop;
+
     debugLabel1.text = debugText1;
     debugLabel2.text = debugTextKeyD;
-    
+    debugLabelFps.text = (fps < 40) ? "FPS: " + fps : "";
+
     this._handleCollisions();
 
     if (this.hero.isLedgeGrabbing || this.hero.isWallJumpPauseL || this.hero.isWallJumpPauseR) {
@@ -1584,9 +1619,12 @@ PlayState._createHud = function () {
         { font: "18px Courier New", fill: "#000000", align: "center" });
     debugLabel2 = this.game.add.text(32*6, 32*0.8, debugTextKeyD, 
         { font: "18px Courier New", fill: "#000000", align: "center" });
+    debugLabelFps = this.game.add.text(32*1, 32*1.5, debugTextFps, 
+        { font: "18px Courier New", fill: "#000000", align: "center" });
 
     this.hud.add(debugLabel1);
     this.hud.add(debugLabel2);
+    this.hud.add(debugLabelFps);
 
     this.hud.add(coinIcon);
     this.hud.add(coinScoreImg);
