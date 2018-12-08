@@ -514,26 +514,27 @@ function touchButtonFullScreenPress (thisButton) {
     {
         var doc = window.document;
         var docEl = doc.documentElement;
-    
-        var requestFullScreen = 
-            docEl.requestFullscreen || 
-            docEl.mozRequestFullScreen || 
-            docEl.webkitRequestFullScreen || 
-            docEl.msRequestFullscreen;
-        var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
-    
         if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+            let requestFullScreen = 
+                docEl.requestFullscreen || 
+                docEl.mozRequestFullScreen || 
+                docEl.webkitRequestFullScreen || 
+                docEl.msRequestFullscreen;
             requestFullScreen.call(docEl);
             touchButtonFullScreen.loadTexture('controlsFullScreenExit');
         }
         else {
+            let cancelFullScreen = 
+                doc.exitFullscreen || 
+                doc.mozCancelFullScreen || 
+                doc.webkitExitFullscreen || 
+                doc.msExitFullscreen;
             cancelFullScreen.call(doc);
             touchButtonFullScreen.loadTexture('controlsFullScreen');
         }
     }
-    catch (ex)
-    {
-        alert(ex);
+    catch (ex) {
+        alert("FullScreen error: " + ex);
     }
 }
 
