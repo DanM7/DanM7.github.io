@@ -19,9 +19,20 @@ const controlHeightLR = 62;
 const screenPad = 20;
 const controlsPad = 10;
 
+let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 let sourceMobile = false;
-let gameWidth = window.visualViewport.width - 40; // window.visualViewport.width or window.innerWidth?
-let gameHeight = window.visualViewport.height - 40;
+let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
+let gameHeight = window.innerHeight - 40;
+if (isMobileiOs) {
+    if (math.abs(window.orientation) == 90) {
+        gameWidth = screen.height; 
+        gameHeight = screen.width;
+    }
+    else {
+        gameWidth = screen.width; 
+        gameHeight = screen.height;
+    }
+}
 
 let keyPressToggleD = true;
 
@@ -363,7 +374,7 @@ LoadingState.preload = function () {
     this.game.load.image('font:numbers', 'images/numbers.png');
 
     // Items:
-    this.game.load.spritesheet('items001', 'images/items/items001.png', 48, 48, 16, 16)
+    //this.game.load.spritesheet('items001', 'images/items/items001.png', 48, 48, 16, 16)
     this.game.load.image('icon:coin', 'images/coin_icon.png');
     this.game.load.image('background', 'images/background.png');
     this.game.load.image('invisible-wall', 'images/invisible_wall.png');
@@ -1478,6 +1489,7 @@ PlayState._createHud = function () {
     this.hud = this.game.add.group();
 
     let directionButtonsSpacingX = 20;
+    let buttonScale = 2;
 
     //#region Upper Left
     
@@ -1507,6 +1519,7 @@ PlayState._createHud = function () {
         buttonUpY + controlHeightUD + 2, 
         'controlsDown'
     );
+    buttonDown.scale.setTo(1.5, 1.5);
     buttonDown.events.onInputDown.add(touchButtonDownPress, this);
     buttonDown.events.onInputUp.add(touchButtonDownRelease, this);
 
@@ -1515,6 +1528,7 @@ PlayState._createHud = function () {
         buttonUpY + controlHeightUD/2 + controlsPad - 1, 
         'controlsLeft'
     );
+    buttonLeft.scale.setTo(1.5, 1.5);
     buttonLeft.events.onInputDown.add(touchButtonLeftPress, this);
     buttonLeft.events.onInputUp.add(touchButtonLeftRelease, this);
 
@@ -1523,6 +1537,7 @@ PlayState._createHud = function () {
         buttonLeft.y, 
         'controlsRight'
     );
+    buttonRight.scale.setTo(1.5, 1.5);
     buttonRight.events.onInputDown.add(touchButtonRightPress, this);
     buttonRight.events.onInputUp.add(touchButtonRightRelease, this);
 
@@ -1531,11 +1546,11 @@ PlayState._createHud = function () {
     //#region Bottom Right
 
     touchButtonA = this.game.add.sprite(
-        gameWidth - 120,
-        gameHeight - 120,
+        gameWidth - (60 + 60*buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
+        gameHeight - (60 + 60*buttonScale),
         'touchButtonA'
     );
-    
+    touchButtonA.scale.setTo(buttonScale, buttonScale);
     touchButtonA.events.onInputDown.add(touchButtonAPress, this);
     touchButtonA.events.onInputUp.add(touchButtonARelease, this);
 
