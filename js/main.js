@@ -481,19 +481,26 @@ function touchButtonRightRelease (thisButton) {
     PlayState.keys.right.isDown = false;
 }
 
-function touchButtonFullScreenPress (thisButton) {
+function touchButtonFullScreenPressF (thisButton) {
     try
     {
         // Maintain aspect ratio
-        PlayState.game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+        //PlayState.game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
 
         if (PlayState.game.scale.isFullScreen) {
             PlayState.game.scale.stopFullScreen();
             touchButtonFullScreen.loadTexture('controlsFullScreen');
         } 
         else {
-            PlayState.game.scale.startFullScreen(false);
+            // Set anti-alias to false to maintain pixel art:
+            let antiAlias = false;
+            let allowTrampoline = false;
+            let fullScreenAtempt = 
+                PlayState.game.scale.startFullScreen(antiAlias, allowTrampoline);
             touchButtonFullScreen.loadTexture('controlsFullScreenExit');
+            if (!fullScreenAtempt) {
+                alert("Failed to initiate fullscreen!");
+            }
         }
     }
     catch (ex)
@@ -502,13 +509,17 @@ function touchButtonFullScreenPress (thisButton) {
     }
 }
 
-function touchButtonFullScreenPress2 (thisButton) {
+function touchButtonFullScreenPress (thisButton) {
     try
     {
         var doc = window.document;
         var docEl = doc.documentElement;
     
-        var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+        var requestFullScreen = 
+            docEl.requestFullscreen || 
+            docEl.mozRequestFullScreen || 
+            docEl.webkitRequestFullScreen || 
+            docEl.msRequestFullscreen;
         var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
     
         if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
@@ -1593,7 +1604,8 @@ PlayState._createHud = function () {
         10,
         'controlsFullScreen'
     );
-    touchButtonFullScreen.events.onInputDown.add(touchButtonFullScreenPress, this);
+    touchButtonFullScreen.events.onInputUp.add(touchButtonFullScreenPress, this);
+    //touchButtonFullScreen.events.onInputOver.add(touchButtonFullScreenPress, this);
 
     let controlButtons = [
         touchButtonA,
