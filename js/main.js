@@ -23,15 +23,13 @@ let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStre
 let sourceMobile = false;
 let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
 let gameHeight = window.innerHeight - 40;
-if (isMobileiOs) {
-    if (Math.abs(window.orientation) == 90) {
-        gameWidth = screen.height; 
-        gameHeight = screen.width;
-    }
-    else {
-        gameWidth = screen.width; 
-        gameHeight = screen.height;
-    }
+if (Math.abs(window.orientation) == 90) {
+    gameWidth = window.innerHeight; 
+    gameHeight = window.innerWidth;
+}
+else {
+    gameWidth = window.innerWidth; 
+    gameHeight = window.innerHeight;
 }
 
 let keyPressToggleD = true;
