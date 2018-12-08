@@ -21,12 +21,12 @@ const controlsPad = 10;
 
 let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 let sourceMobile = false;
-let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
-let gameHeight = window.innerHeight - 40;
+let gameWidth = (isMobileiOs) ? screen.width : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
+let gameHeight = (isMobileiOs) ? screen.height : window.innerHeight - 40;
 if (Math.abs(window.orientation) == 90) {
     let tempDim = gameWidth;
     gameWidth = gameHeight;
-    gameHeight = gameWidth;
+    gameHeight = tempDim;
 }
 
 let keyPressToggleD = true;
