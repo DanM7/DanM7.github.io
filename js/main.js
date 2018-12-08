@@ -24,7 +24,7 @@ let sourceMobile = false;
 let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
 let gameHeight = window.innerHeight - 40;
 if (isMobileiOs) {
-    if (math.abs(window.orientation) == 90) {
+    if (Math.abs(window.orientation) == 90) {
         gameWidth = screen.height; 
         gameHeight = screen.width;
     }
