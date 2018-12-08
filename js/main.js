@@ -24,12 +24,9 @@ let sourceMobile = false;
 let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
 let gameHeight = window.innerHeight - 40;
 if (Math.abs(window.orientation) == 90) {
-    gameWidth = window.innerHeight; 
-    gameHeight = window.innerWidth;
-}
-else {
-    gameWidth = window.innerWidth; 
-    gameHeight = window.innerHeight;
+    let tempDim = gameWidth;
+    gameWidth = gameHeight;
+    gameHeight = gameWidth;
 }
 
 let keyPressToggleD = true;
