@@ -514,14 +514,20 @@ function touchButtonFullScreenPress (thisButton) {
     {
         var doc = window.document;
         var docEl = doc.documentElement;
+        docEl = document.getElementById('game');
         if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
             let requestFullScreen = 
                 docEl.requestFullscreen || 
                 docEl.mozRequestFullScreen || 
                 docEl.webkitRequestFullScreen || 
                 docEl.msRequestFullscreen;
-            requestFullScreen.call(docEl);
-            touchButtonFullScreen.loadTexture('controlsFullScreenExit');
+            if (typeof requestFullScreen === 'undefined') {
+                alert("FullScreen request is undefined!");
+            }
+            else {
+                requestFullScreen.call(docEl);
+                touchButtonFullScreen.loadTexture('controlsFullScreenExit');
+            }
         }
         else {
             let cancelFullScreen = 
