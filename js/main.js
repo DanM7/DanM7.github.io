@@ -49,7 +49,7 @@ var touchButtonA;
 var touchButtonB;
 
 var buttonUpX = controlsX + controlWidthLR - controlWidthLR/2 + controlsPad;
-var buttonUpY = gameHeight - screenPad - controlHeightUD*2;
+var buttonUpY = gameHeight - screenPad - controlHeightUD*2 - controlsPad;
 
 var dPadGlobalX = 80 + 16;
 var dPadGlobY = buttonUpY + 80 + 4;
@@ -1644,13 +1644,14 @@ PlayState._createHud = function () {
     
     buttonUp = this.game.add.sprite(
         buttonUpX + directionButtonsSpacingX, 
-        buttonUpY + 1//, 'controlsUp'
+        buttonUpY + 1
+        //, 'controlsUp'
     );
 
     buttonDown = this.game.add.sprite(
         buttonUpX + 1 + directionButtonsSpacingX, 
-        buttonUpY + controlHeightUD + 2, 
-        'controlsDown'
+        buttonUpY + controlHeightUD + 2
+        //,'controlsDown'
     );
     buttonDown.scale.setTo(1.5, 1.5);
     buttonDown.events.onInputDown.add(touchButtonDownPress, this);
@@ -1692,7 +1693,7 @@ PlayState._createHud = function () {
     //#region Top Right
     
     touchButtonFullScreen = this.game.add.sprite(
-        gameWidth - 70,
+        gameWidth - 170,
         10,
         'controlsFullScreen'
     );
@@ -1700,7 +1701,7 @@ PlayState._createHud = function () {
     //touchButtonFullScreen.events.onInputOver.add(touchButtonFullScreenPress, this);
 
     touchButtonSettings = this.game.add.sprite(
-        gameWidth - 170,
+        gameWidth - 70,
         10,
         'controlsSettings'
     );
