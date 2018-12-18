@@ -131,8 +131,10 @@ function Hero(game, x, y) {
     this.touchingRightCount = 0;
     this.isWallJumpPauseR = false;
     this.isWallJumpPauseRDuration = 0;
+    this.wallJumpPauseRHeight = 0;
     this.isWallJumpPauseL = false;
     this.isWallJumpPauseLDuration = 0;
+    this.wallJumpPauseLHeight = 0;
     
     // animations ('name', [frames], fps, looped?)
     this.animations.add(ANIMATION_HERO_IDLE, [0, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0, 0], 4, true);
@@ -186,20 +188,26 @@ Hero.prototype.move = function (direction) {
 
 Hero.prototype.canExtraJump = function () {
     return (
-        this.alive && !this.isFrozen && 
-        this.isJumpingSingle && !this.isBoosting &&
-        this.extraJumpsCurrent < this.extraJumpsMax
+        this.alive 
+        && !this.isFrozen 
+        && (this.extraJumpsCurrent < this.extraJumpsMax) 
+        && !this.isBoosting 
+        && (
+            this.isJumpingSingle 
+            // 2018-12-17: now you can walk off a ledge and jump while free-falling.
+            || (this.touchingDownCount == 0 && this.body.velocity.y >= 0) 
+        )
     );
 }
 
 Hero.prototype.canSingleJump = function () {
     return (
-        this.alive && !this.isFrozen && 
-        (
+        this.alive 
+        && !this.isFrozen && (
             this.touchingDownCount > 0 || 
             this.isLedgeGrabbing || 
             this.isWallJumpPauseL || 
-            this.isWallJumpPauseR
+            this.isWallJumpPauseR 
         )
     );
 }
@@ -367,6 +375,7 @@ LoadingState.preload = function () {
     this.game.load.image('touchButtonB', 'images/controls/flatDark/flatDark36.png');
     this.game.load.image('controlsFullScreen', 'images/controls/flatDark/flatDark29.png');
     this.game.load.image('controlsFullScreenExit', 'images/controls/flatDark/flatDark34.png');
+    this.game.load.image('controlsSettings', 'images/controls/flatDark/flatDark30.png');
 
     // Fonts:
     this.game.load.image('font:numbers', 'images/numbers.png');
@@ -443,6 +452,72 @@ function touchButtonARelease (thisButton) {
     thisButton.alpha = controlsAlpha;
     PlayState.keys.up.isDown = false;
     keyUpDurationDown = null;
+}
+
+function unpauseGame(event){
+    /*
+    // Only act if paused
+    if(PlayState.game.paused){
+        // Calculate the corners of the menu
+        var x1 = w/2 - 270/2, x2 = w/2 + 270/2,
+            y1 = h/2 - 180/2, y2 = h/2 + 180/2;
+
+        // Check if the click was inside the menu
+        if(event.x > x1 && event.x < x2 && event.y > y1 && event.y < y2 ){
+            // The choicemap is an array that will help us see which item was clicked
+            var choisemap = ['one', 'two', 'three', 'four', 'five', 'six'];
+
+            // Get menu local coordinates for the click
+            var x = event.x - x1,
+                y = event.y - y1;
+
+            // Calculate the choice 
+            var choise = Math.floor(x / 90) + 3*Math.floor(y / 90);
+
+            // Display the choice
+            choiseLabel.text = 'You chose menu item: ' + choisemap[choise];
+        }
+        else{
+            // Remove the menu and the label
+            menu.destroy();
+            choiseLabel.destroy();
+
+            // Unpause the game
+            PlayState.game.paused = false;
+        }
+    }
+    */
+    PlayState.game.paused = false;
+    
+    touchButtonA.alpha = controlsAlpha;
+};
+
+function touchButtonSettingsPress (thisButton) {
+    //thisButton.alpha = controlsAlphaDown;
+    //controlsSettings
+
+    PlayState.game.paused = true;
+
+    // Hide the existing A button and draw a temp one:
+    touchButtonA.alpha = 0;
+    
+    let touchButtonACustom = this.game.add.sprite(
+        gameWidth - (60 + 60*buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
+        gameHeight - (60 + 60*buttonScale),
+        'touchButtonA'
+    );
+    touchButtonACustom.scale.setTo(buttonScale, buttonScale);
+    //touchButtonACustom.events.onInputDown.add(touchButtonAPress, this);
+    //touchButtonACustom.events.onInputUp.add(touchButtonARelease, this);
+
+
+    // Then add the menu
+    //menu = game.add.sprite(w/2, h/2, 'menu');
+    //menu.anchor.setTo(0.5, 0.5);
+
+    // And a label to illustrate which menu item was chosen. (This is not necessary)
+    //choiseLabel = game.add.text(w/2, h-150, 'Click outside menu to continue', { font: '30px Arial', fill: '#fff' });
+    //choiseLabel.anchor.setTo(0.5, 0.5);
 }
 
 function touchButtonUpPress (thisButton) {
@@ -598,6 +673,8 @@ PlayState.create = function () {
     // }
     this._loadLevel(this.game.cache.getJSON(`level:${this.level}`));
 
+    this.game.input.onDown.add(unpauseGame, self);
+
     // create UI score boards
     this._createHud();
 };
@@ -633,9 +710,11 @@ PlayState.update = function () {
         this.hero.body.allowGravity = false;
         if (this.hero.isWallJumpPauseL) {
             this.hero.isWallJumpPauseLDuration++;
+            this.hero.wallJumpPauseLHeight = this.hero.y;
         }
         if (this.hero.isWallJumpPauseR) {
             this.hero.isWallJumpPauseRDuration++;
+            this.hero.wallJumpPauseRHeight = this.hero.y;
         }
     }
     else {
@@ -679,9 +758,9 @@ PlayState.shutdown = function () {
 //   Overlap:      Handle with corresponding events;
 PlayState._handleCollisions = function () {
     // Legacy:
-    this.game.physics.arcade.collide(this.spiders, this.platforms);
-    this.game.physics.arcade.collide(this.spiders, this.enemyWalls);
-    this.game.physics.arcade.collide(this.hero, this.platforms);
+    //this.game.physics.arcade.collide(this.spiders, this.platforms);
+    //this.game.physics.arcade.collide(this.spiders, this.enemyWalls);
+    //this.game.physics.arcade.collide(this.hero, this.platforms);
     
     // Reset hero's collision-based state:
     this.hero.resetCollisionStates();
@@ -692,24 +771,29 @@ PlayState._handleCollisions = function () {
         );
     }, this);
     
+    // Is the hero standing or in the air?
     // ToDo: move this to landscape-specific event handler function.
     if (this.hero.touchingDownCount > 0) {
+        // Standing:
         this.hero.isJumpingSingle = false;
         this.hero.isJumpingExtra = false;
         this.hero.extraJumpsCurrent = 0;
         this.hero.canWallJumpL = true;
         this.hero.canWallJumpR = true;
     }
-    else if (debugLevel === 1) {
-        this.game.debug.reset();
-    }
+    else {
+        if (debugLevel === 1) {
+            this.game.debug.reset();
+        }
 
-    // if (this.hero.touchingRightCount == 0) {
-    //     this.hero.isWallJumpPauseR = false;
-    // }
-    // if (this.hero.touchingLeftCount == 0) {
-    //     this.hero.isWallJumpPauseL = false;
-    // }
+        //isWallJumpPauseLHeight, now wallJumpPauseLHeight
+        if (this.hero.y > this.hero.wallJumpPauseLHeight + 128) {
+            this.hero.canWallJumpL = true;
+        }
+        if (this.hero.y > this.hero.wallJumpPauseRHeight + 128) {
+            this.hero.canWallJumpR = true;
+        }
+    }
 
     // hero vs coins (pick up)
     this.game.physics.arcade.overlap(this.hero, this.coins, this._onHeroVsCoin, null, this);
@@ -1049,8 +1133,9 @@ PlayState._onHeroCollisionWithLand = function (hero, land) {
         (hero.canWallJumpL && hero.scale.x === -1) || 
         (hero.canWallJumpR && hero.scale.x === 1);
     
+    // If there's been a mid-air collision with a verticle wall, check if 
+    // we should ledge grab or do a wall-pause so we can do a wall jump.
     let midAirCollision = !touchingUp && !touchingDown && (touchingRight || touchingLeft);
-    
     if (midAirCollision) {
         if (abs(hero.body.y - land.y) < hero.ledgeGrabProximity)  {
             if (heroCanLedgeGrab) {
@@ -1069,7 +1154,7 @@ PlayState._onHeroCollisionWithLand = function (hero, land) {
                 hero.extraJumpsCurrent = 0;
                 hero.touchingDownCount = 0;
 
-                // ToDo: do for Left and Right based on what way we're "facing".
+                // ToDo: 2018-12-17 also set current wall jump height.
                 if (hero.scale.x === 1) {
                     hero.isWallJumpPauseR = true;
                 }
@@ -1614,9 +1699,19 @@ PlayState._createHud = function () {
     touchButtonFullScreen.events.onInputUp.add(touchButtonFullScreenPress, this);
     //touchButtonFullScreen.events.onInputOver.add(touchButtonFullScreenPress, this);
 
+    touchButtonSettings = this.game.add.sprite(
+        gameWidth - 170,
+        10,
+        'controlsSettings'
+    );
+    touchButtonSettings.events.onInputDown.add(touchButtonSettingsPress, this);
+
+    //#endregion Top Right
+    
     let controlButtons = [
         touchButtonA,
         touchButtonFullScreen,
+        touchButtonSettings,
         buttonUp,
         buttonDown, 
         buttonLeft,
