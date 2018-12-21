@@ -34,6 +34,12 @@ var MAZE = (function () {
         }
     };
 
+    
+    // Gets a random number within (inclusive) the input min and max:
+    _randomIntFromIntervalInclusive = function(min, max) {
+        return Math.floor(Math.random()*(max-min+1)+min);
+    };
+
     // private variables:
     let _route,
         _random = _randomGen((Math.random() * 100000) | 0),
@@ -265,8 +271,8 @@ var MAZE = (function () {
         let countRows = map.length;
         let totalSpaces = countColumns * countRows;
         while (totalSpaces > 0) {
-            let randomX = randomIntFromIntervalInclusive(0, countColumns - 1);
-            let randomY = randomIntFromIntervalInclusive(0, countRows - 1);
+            let randomX = _randomIntFromIntervalInclusive(0, countColumns - 1);
+            let randomY = _randomIntFromIntervalInclusive(0, countRows - 1);
             if (map[randomY][randomX] === requiredSpaceValue) {
                 // Assume the space is valid:
                 let isValidSpace = true;

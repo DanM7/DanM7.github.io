@@ -1,3 +1,9 @@
+// #region Imports
+
+import Hero1 from '../js/sidescroller/Hero1.js';
+//var hero1 = new Hero1();
+
+// #endregion Imports
 
 // #region Globals & Constants
 
@@ -349,7 +355,7 @@ Hero.prototype._getAnimationName = function () {
 
 // #region Loading State
 
-LoadingState = {};
+let LoadingState = {};
 
 LoadingState.init = function () {
     // keep crispy-looking pixels
@@ -383,7 +389,8 @@ LoadingState.preload = function () {
     // Items:
     //this.game.load.spritesheet('items001', 'images/items/items001.png', 48, 48, 16, 16)
     this.game.load.image('icon:coin', 'images/coin_icon.png');
-    this.game.load.image('background', 'images/background.png');
+    //this.game.load.image('background', 'images/background.png');
+    this.game.load.image('background', 'images/backgrounds/lava_temple.png');
     this.game.load.image('invisible-wall', 'images/invisible_wall.png');
 
     this.game.load.spritesheet('landscape', 'images/landscape_tileset_32.png', 32, 32, (1408/32)*(384/32)); //, (1408/32)*(384/32)
@@ -413,7 +420,7 @@ LoadingState.create = function () {
 
 // #region Play State
 
-PlayState = {};
+let PlayState = {};
 
 // Restart the game once we reach this many levels:
 // TRY: Get this from JSON files.
@@ -619,25 +626,14 @@ function touchButtonFullScreenPress (thisButton) {
     }
 }
 
-function touchButtonFullScreenPress_Old (thisButton) {
-    // User pressed controlsFullScreen:
-    if (PlayState.game.scale.isFullScreen) {
-        PlayState.game.scale.stopFullScreen();
-        PlayState.game.scale.setGameSize(
-            gameWidth, 
-            gameHeight
-        );
-        touchButtonFullScreen.loadTexture('controlsFullScreen');
-    }
-    else {
-        PlayState.game.scale.startFullScreen(false);
-        PlayState.game.scale.setGameSize(
-            window.screen.availWidth, 
-            window.screen.availHeight
-        );
-        touchButtonFullScreen.loadTexture('controlsFullScreenExit');
-    }
-    PlayState.game.scale.refresh();
+function addBackgroundToGame(currentGame, backgroundImageName) {
+    let img = currentGame.cache.getImage(backgroundImageName);
+    let bg = currentGame.add.image(
+        currentGame.world.centerX - img.width/2,
+        currentGame.world.centerY - img.height/2,//(currentGame.world.height/-2) + backgroundImageName.height*2, 
+        backgroundImageName
+    );
+    bg.fixedToCamera = true;
 }
 
 // Game State 3: Create (create game entities and set up world here):
@@ -658,9 +654,10 @@ PlayState.create = function () {
     this.bgm = this.game.add.audio('bgm');
     this.bgm.loopFull();
 
-    // create level entities and decoration
-    let bg = this.game.add.image(0, 0, 'background');
-    bg.fixedToCamera = true;
+    // Create level entities and decoration:
+    // let bg = this.game.add.image(0, 0, 'background');
+    // bg.fixedToCamera = true;
+    addBackgroundToGame(this.game, 'background');
 
     // ToDo: something other than the json load needs to determine if
     // the level is an actual level or a maze. For that matter, there needs
@@ -1433,11 +1430,6 @@ PlayState._setMazeDataFromJson = function (data) {
     this.game.add.existing(this.hero);
 };
 
-// Gets a random number within (inclusive) the input min and max:
-function randomIntFromIntervalInclusive(min, max) {
-    return Math.floor(Math.random()*(max-min+1)+min);
-};
-
 PlayState._setLevelDataFromJson = function (data) {
     let boundW = (data.world.w < gameWidth) ? gameWidth : data.world.w;
     let boundH = (data.world.h < gameHeight) ? gameHeight : data.world.h;
@@ -1642,13 +1634,13 @@ PlayState._createHud = function () {
 
     //#region Bottom Left
     
-    buttonUp = this.game.add.sprite(
+    let buttonUp = this.game.add.sprite(
         buttonUpX + directionButtonsSpacingX, 
         buttonUpY + 1
         //, 'controlsUp'
     );
 
-    buttonDown = this.game.add.sprite(
+    let buttonDown = this.game.add.sprite(
         buttonUpX + 1 + directionButtonsSpacingX, 
         buttonUpY + controlHeightUD + 2
         //,'controlsDown'
@@ -1657,7 +1649,7 @@ PlayState._createHud = function () {
     buttonDown.events.onInputDown.add(touchButtonDownPress, this);
     buttonDown.events.onInputUp.add(touchButtonDownRelease, this);
 
-    buttonLeft = this.game.add.sprite(
+    let buttonLeft = this.game.add.sprite(
         controlsX + 4, 
         buttonUpY + controlHeightUD/2 + controlsPad - 1, 
         'controlsLeft'
@@ -1666,7 +1658,7 @@ PlayState._createHud = function () {
     buttonLeft.events.onInputDown.add(touchButtonLeftPress, this);
     buttonLeft.events.onInputUp.add(touchButtonLeftRelease, this);
 
-    buttonRight = this.game.add.sprite(
+    let buttonRight = this.game.add.sprite(
         buttonLeft.x + controlWidthLR - 1 + 2*directionButtonsSpacingX, // -3 or -1
         buttonLeft.y, 
         'controlsRight'
@@ -1679,7 +1671,7 @@ PlayState._createHud = function () {
     
     //#region Bottom Right
 
-    touchButtonA = this.game.add.sprite(
+    let touchButtonA = this.game.add.sprite(
         gameWidth - (60 + 60*buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
         gameHeight - (60 + 60*buttonScale),
         'touchButtonA'
@@ -1692,7 +1684,7 @@ PlayState._createHud = function () {
     
     //#region Top Right
     
-    touchButtonFullScreen = this.game.add.sprite(
+    let touchButtonFullScreen = this.game.add.sprite(
         gameWidth - 170,
         10,
         'controlsFullScreen'
@@ -1700,7 +1692,7 @@ PlayState._createHud = function () {
     touchButtonFullScreen.events.onInputUp.add(touchButtonFullScreenPress, this);
     //touchButtonFullScreen.events.onInputOver.add(touchButtonFullScreenPress, this);
 
-    touchButtonSettings = this.game.add.sprite(
+    let touchButtonSettings = this.game.add.sprite(
         gameWidth - 70,
         10,
         'controlsSettings'
