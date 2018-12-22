@@ -1,5 +1,5 @@
 //class Hero1 extends Phaser.Game {
-class Hero2 extends Phaser.Game {
+class Hero2 {
     constructor(game, x, y) {
         //alert("Hero2");
     }
