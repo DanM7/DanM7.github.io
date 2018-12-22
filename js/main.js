@@ -1,7 +1,6 @@
 // #region Imports
 
-import Hero1 from '../js/sidescroller/Hero1.js';
-//var hero1 = new Hero1();
+import Hero2 from '../js/sidescroller/Hero2.js';
 
 // #endregion Imports
 
@@ -68,6 +67,10 @@ let dpadCircleArea = new Phaser.Circle(
     dPadGlobalR*2
 );
 
+var lastLoop = new Date();
+
+var abs=Math.abs;
+
 Math.getAngle = function(x1, y1, x2, y2) {
 	var	dx = x1 - x2,
         dy = y1 - y2;
@@ -77,7 +80,28 @@ Math.getAngle = function(x1, y1, x2, y2) {
 
 // #endregion Globals & Constants
 
+function shadeColor2(color, percent) {   
+    var f = parseInt(color, 16),
+        t=percent<0?0:255,
+        p=percent<0?percent*-1:percent,
+        R=f>>16,
+        G=f>>8&0x00FF,
+        B=f&0x0000FF;
+    let newR = 0x010000 * (Math.round((t-R)*p)+R);
+    let newG = 0x000100 * (Math.round((t-G)*p)+G);
+    let newB = 0x000001 * (Math.round((t-B)*p)+B);
+    return (
+        0x1000000 + 
+        (Math.round((t-R)*p)+R)*0x10000 + 
+        (Math.round((t-G)*p)+G)*0x100 + 
+        (Math.round((t-B)*p)+B)
+    );
+    //return (newR + newG + newB);
+}
+
 // #region Hero
+
+var hero2 = new Hero2();
 
 const ANIMATION_HERO_IDLE = 'animationHeroIdle';
 const ANIMATION_HERO_SLIDING = 'animationHeroSliding';
@@ -418,7 +442,7 @@ LoadingState.create = function () {
 
 // #endregion Loading State
 
-// #region Play State
+//#region Play State
 
 let PlayState = {};
 
@@ -683,8 +707,6 @@ function padLeft(number, width, padInput) {
         new Array(width + (/\./.test(number) ? 2 : 1)).join(padChar) + number : 
         number + ""; // always return a string
 }
-
-var lastLoop = new Date();
 
 function getFps(thisLoop, lastLoop) {
     return (1000 / (thisLoop - lastLoop))|0;
@@ -1075,8 +1097,6 @@ PlayState._handleInput = function () {
         this.hero.slidingFramesCurrent = 0;
     }
 };
-
-var abs=Math.abs;
 
 PlayState._onHeroCollisionWithFood = function (hero, food) {
     this.sfx.key.play(); // ToDo: get a "chomp" chewing sound;
@@ -1716,8 +1736,6 @@ PlayState._createHud = function () {
         PlayState.hud.add(controlButton);
     });
 
-    //#endregion Top Right
-    
     // debugText1 = 
     //     "Game: (" + gameWidth + "," + gameHeight + "); " + 
     //     "DPad: (" + buttonUpX + "," + buttonUpY + ")";
@@ -1741,26 +1759,7 @@ PlayState._createHud = function () {
     this.hud.cameraOffset.setTo(8, 8);
 };
 
-// #endregion Play State
-
-function shadeColor2(color, percent) {   
-    var f = parseInt(color, 16),
-        t=percent<0?0:255,
-        p=percent<0?percent*-1:percent,
-        R=f>>16,
-        G=f>>8&0x00FF,
-        B=f&0x0000FF;
-    let newR = 0x010000 * (Math.round((t-R)*p)+R);
-    let newG = 0x000100 * (Math.round((t-G)*p)+G);
-    let newB = 0x000001 * (Math.round((t-B)*p)+B);
-    return (
-        0x1000000 + 
-        (Math.round((t-R)*p)+R)*0x10000 + 
-        (Math.round((t-G)*p)+G)*0x100 + 
-        (Math.round((t-B)*p)+B)
-    );
-    //return (newR + newG + newB);
-}
+//#endregion Play State
 
 window.onload = function () {
     // if (sourceMobile) {
