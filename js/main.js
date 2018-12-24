@@ -1,17 +1,22 @@
-// #region Imports
+// #region Imports & Classes
 
 import Hero2 from '../js/sidescroller/Hero2.js';
 
-// #endregion Imports
+class animationData {
+    constructor(name, frames, fps, looped) {
+        this.name = name;
+        this.frames = frames; 
+        this.fps = fps; 
+        this.looped = looped;
+    }
+}
+
+// #endregion Imports & Classes
 
 // #region Globals & Constants
 
 let debugLevel = 0;
 let maxDebugLevel = 4; // 0=none;1=keys;2=bodies;3=camera;4=touch;
-
-const DEBUG_TOGGLE_HERO = true;
-
-const GRAVITY = 1200;
 
 const controlsAlpha = 0.5;
 const controlsAlphaDown = 0.8;
@@ -69,6 +74,10 @@ let dpadCircleArea = new Phaser.Circle(
 
 var lastLoop = new Date();
 
+// Restart the game once we reach this many levels:
+// TRY: Get this from JSON files.
+var LEVEL_COUNT = 999;
+
 var abs=Math.abs;
 
 Math.getAngle = function(x1, y1, x2, y2) {
@@ -77,8 +86,6 @@ Math.getAngle = function(x1, y1, x2, y2) {
     let atan2Degrees = Math.atan2(dy, dx) * -180 / Math.PI;
 	return (atan2Degrees < 0) ? 360 + atan2Degrees : atan2Degrees;
 };
-
-// #endregion Globals & Constants
 
 function shadeColor2(color, percent) {   
     var f = parseInt(color, 16),
@@ -99,9 +106,11 @@ function shadeColor2(color, percent) {
     //return (newR + newG + newB);
 }
 
-// #region Hero
+// #endregion Globals & Constants
 
-var hero2 = new Hero2();
+// #region Hero Animations
+
+// ToDo ES6: load this from JSON. This should be game-specific data, not hardcoded.
 
 const ANIMATION_HERO_IDLE = 'animationHeroIdle';
 const ANIMATION_HERO_SLIDING = 'animationHeroSliding';
@@ -116,266 +125,23 @@ const ANIMATION_HERO_LEDGE_PULLUP = 'animationHeroLedgePullup';
 const ANIMATION_HERO_SWORD_DRAW = 'animationHeroSwordDraw';
 const ANIMATION_HERO_SWORD_ATTACK_BASIC = 'animationHeroSwordAttackBasic';
 
-const HERO_DEFAULT_SPRIE_WIDTH = 100;
-const HERO_DEFAULT_SPRITE_HEIGHT = 73;
-const HERO_DEFAULT_SIZE_WIDTH = 40;
-const HERO_DEFAULT_SIZE_HEIGHT = 60;
-const HERO_DEFAULT_SIZE_OFFSET_X = 32;
-const HERO_DEFAULT_SIZE_OFFSET_Y = 13;
+// animations ('name', [frames], fps, looped?)
+let heroAnimations = [
+    new animationData(ANIMATION_HERO_IDLE, [0, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0, 0], 4, true),
+    new animationData(ANIMATION_HERO_CROUCH, [4, 4, 4, 4, 4, 5, 6, 7, 4, 4, 4, 4], 4, true),
+    new animationData(ANIMATION_HERO_RUN, [8, 9, 10, 11, 12, 13], 8, true),
+    new animationData(ANIMATION_HERO_SLIDING, [24, 25, 26, 27], 8, false), // ToDo: add 28 is initial in-between;
+    new animationData(ANIMATION_HERO_LEDGE_GRAB, [29, 30, 31, 30], 2, true),
+    new animationData(ANIMATION_HERO_LEDGE_PULLUP, [33, 34, 35, 36, 37], 8, false),
+    new animationData(ANIMATION_HERO_SWORD_DRAW, [69, 70, 71, 72, 73], 8, false),
+    new animationData(ANIMATION_HERO_WALL_JUMP_PAUSE, [79, 80], 4, true),
+    new animationData(ANIMATION_HERO_JUMP, [14, 15, 16, 17], 12, false),// ToDo: loop last few frames of these 2 and split them so they're the initial action then the loop.
+    new animationData(ANIMATION_HERO_JUMP_EXTRA, [18, 19, 20, 21], 12, true),
+    new animationData(ANIMATION_HERO_FALL, [17, 22, 23], 8, false),
+    new animationData('die', [5, 6, 5, 6, 5, 6, 5, 6], 12)
+];
 
-var heroAnimationDimensions = {}; // Note: offsetY needs to be the sprite's default height (ex. 73) - h!
-heroAnimationDimensions[ANIMATION_HERO_SLIDING] = { "w": 40, "h": 30, "offsetX": 35, "offsetY": 43.5 };
-
-function Hero(game, x, y) {
-    // call Phaser.Sprite constructor
-    Phaser.Sprite.call(this, game, x, y, 'hero');
-
-    // anchor
-    this.anchor.set(0.5, 0.5);
-
-    // physics properties
-    this.game.physics.enable(this);
-    this.body.collideWorldBounds = true;
-
-    // player settings:
-    this.jumpSpeed = 400;
-    this.extraJumpsCurrent = 0;
-    this.extraJumpsMax = 1;
-    this.slidingFramesCurrent = 0;
-    this.slidingFramesMax = 32;
-    this.canLedgeGrab = true;
-    this.canWallJumpL = true;
-    this.canWallJumpR = true;
-    this.wallJumpPauseDurationLimit = 30;
-    this.ledgeGrabProximity = 5;
-
-    // player state:
-    this.canSlide = false; // Disable for now. See ToDo below explaining why.
-    this.isCrouching = false;
-    this.isJumpingSingle = false;
-    this.isJumpingExtra = false;
-    this.isSliding = false;
-    this.isLedgeGrabbing = false;
-    this.touchingDownCount = 0;
-    this.touchingLeftCount = 0;
-    this.touchingRightCount = 0;
-    this.isWallJumpPauseR = false;
-    this.isWallJumpPauseRDuration = 0;
-    this.wallJumpPauseRHeight = 0;
-    this.isWallJumpPauseL = false;
-    this.isWallJumpPauseLDuration = 0;
-    this.wallJumpPauseLHeight = 0;
-    
-    // animations ('name', [frames], fps, looped?)
-    this.animations.add(ANIMATION_HERO_IDLE, [0, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0, 0], 4, true);
-    this.animations.add(ANIMATION_HERO_CROUCH, [4, 4, 4, 4, 4, 5, 6, 7, 4, 4, 4, 4], 4, true);
-    this.animations.add(ANIMATION_HERO_RUN, [8, 9, 10, 11, 12, 13], 8, true);
-    this.animations.add(ANIMATION_HERO_SLIDING, [24, 25, 26, 27], 8, false); // ToDo: add 28 is initial in-between;
-    this.animations.add(ANIMATION_HERO_LEDGE_GRAB, [29, 30, 31, 30], 2, true);
-    this.animations.add(ANIMATION_HERO_LEDGE_PULLUP, [33, 34, 35, 36, 37], 8, false);
-    this.animations.add(ANIMATION_HERO_SWORD_DRAW, [69, 70, 71, 72, 73], 8, false);
-    this.animations.add(ANIMATION_HERO_WALL_JUMP_PAUSE, [79, 80], 4, true);
-
-     // ToDo: loop last few frames of these 2 and split them so they're the initial action then the loop.
-    this.animations.add(ANIMATION_HERO_JUMP, [14, 15, 16, 17], 12, false);
-    this.animations.add(ANIMATION_HERO_JUMP_EXTRA, [18, 19, 20, 21], 12, true);
-    this.animations.add(ANIMATION_HERO_FALL, [17, 22, 23], 8, false);
-
-    this.animations.add('die', [5, 6, 5, 6, 5, 6, 5, 6], 12); // 12fps no loop
-
-    // starting animation
-    this.animations.play(ANIMATION_HERO_IDLE);
-
-    this.body.setSize(
-        HERO_DEFAULT_SIZE_WIDTH, 
-        HERO_DEFAULT_SIZE_HEIGHT,
-        HERO_DEFAULT_SIZE_OFFSET_X, 
-        HERO_DEFAULT_SIZE_OFFSET_Y
-    );
-}
-
-// inherit from Phaser.Sprite
-Hero.prototype = Object.create(Phaser.Sprite.prototype);
-Hero.prototype.constructor = Hero;
-
-Hero.prototype.move = function (direction) {
-    // guard
-    if (this.isFrozen) { return; }
-
-    const SPEED = 200;
-    this.body.velocity.x = direction * SPEED;
-
-    // To turn the player, flip the image with scaling;
-    // flipping (or mirroring) an image is achieved by 
-    // applying a negative scale to the image:
-    if (this.body.velocity.x < 0) {
-        this.scale.x = -1;
-    }
-    else if (this.body.velocity.x > 0) {
-        this.scale.x = 1;
-    }
-};
-
-Hero.prototype.canExtraJump = function () {
-    return (
-        this.alive 
-        && !this.isFrozen 
-        && (this.extraJumpsCurrent < this.extraJumpsMax) 
-        && !this.isBoosting 
-        && (
-            this.isJumpingSingle 
-            // 2018-12-17: now you can walk off a ledge and jump while free-falling.
-            || (this.touchingDownCount == 0 && this.body.velocity.y >= 0) 
-        )
-    );
-}
-
-Hero.prototype.canSingleJump = function () {
-    return (
-        this.alive 
-        && !this.isFrozen && (
-            this.touchingDownCount > 0 || 
-            this.isLedgeGrabbing || 
-            this.isWallJumpPauseL || 
-            this.isWallJumpPauseR 
-        )
-    );
-}
-
-Hero.prototype.doJumpSingle = function () {
-    this.body.velocity.y = -this.jumpSpeed;
-    this.isJumpingSingle = true;
-    this.isBoosting = true;
-    this.isLedgeGrabbing = false;
-    if (this.isWallJumpPauseL) {
-        this.canWallJumpL = false;
-        this.canWallJumpR = true;
-    }
-    else if (this.isWallJumpPauseR) {
-        this.canWallJumpL = true;
-        this.canWallJumpR = false;
-    }
-    this.isWallJumpPauseL = false;
-    this.isWallJumpPauseR = false;
-};
-
-Hero.prototype.doJumpExtra = function () {
-    this.body.velocity.y = -this.jumpSpeed;
-    this.extraJumpsCurrent++;
-    this.isJumpingExtra = true;
-    this.isJumpingSingle = false;
-    this.isBoosting = true;
-};
-
-Hero.prototype.continueJumpBoost = function () {
-    this.body.velocity.y = -this.jumpSpeed;
-    this.isBoosting = true;
-}
-
-Hero.prototype.stopJumpBoost = function () {
-    this.isBoosting = false;
-};
-
-Hero.prototype.bounce = function () {
-
-    // TRY: pass in a bounce factor parameter, where different
-    // enemies have different amounts of bounce to them, from 
-    // zero to a lot (squishy blob has zero, mushroom has a lot).
-    const BOUNCE_SPEED = 200;
-
-    this.body.velocity.y = -BOUNCE_SPEED;
-};
-
-Hero.prototype.update = function () {
-    // update sprite animation, if it needs changing
-    let animationName = this._getAnimationName();
-    if (this.animations.name !== animationName) {
-        this.animations.play(animationName);
-        if (animationName in heroAnimationDimensions) {
-            this.body.setSize(
-                heroAnimationDimensions[animationName].w, 
-                heroAnimationDimensions[animationName].h,
-                heroAnimationDimensions[animationName].offsetX + 0.0, 
-                heroAnimationDimensions[animationName].offsetY + 0.0);
-        }
-        else {
-            this.body.setSize(
-                HERO_DEFAULT_SIZE_WIDTH, 
-                HERO_DEFAULT_SIZE_HEIGHT,
-                HERO_DEFAULT_SIZE_OFFSET_X, 
-                HERO_DEFAULT_SIZE_OFFSET_Y
-            );
-        }
-    }
-};
-
-Hero.prototype.resetCollisionStates = function () {    
-    this.touchingDownCount = 0;
-}
-
-Hero.prototype.freeze = function () {
-    this.body.enable = false;
-    this.isFrozen = true;
-};
-
-Hero.prototype.die = function () {
-    this.alive = false;
-    this.body.enable = false;
-
-    this.animations.play('die').onComplete.addOnce(function () {
-        this.kill();
-    }, this);
-};
-
-// returns the animation name that should be playing depending on
-// current circumstances
-Hero.prototype._getAnimationName = function () {
-    let name = ANIMATION_HERO_IDLE; // default animation
-
-    let deltaX = this.body.position.x - this.body.prev.x;
-
-    // dying
-    if (!this.alive) {
-        name = 'die';
-    }
-    // frozen & not dying
-    else if (this.isFrozen) {
-        name = ANIMATION_HERO_IDLE;
-        this.extraJumpsCurrent = 0;
-    }
-    else if (this.isLedgeGrabbing) {
-        name = ANIMATION_HERO_LEDGE_GRAB;
-    }
-    else if (this.isWallJumpPauseL || this.isWallJumpPauseR) {
-        name = ANIMATION_HERO_WALL_JUMP_PAUSE;
-    }
-    // falling
-    else if (this.body.velocity.y >= 0 && this.touchingDownCount == 0) {
-        name = ANIMATION_HERO_FALL;
-        //if (debugLevel===1) PlayState.game.debug.body(this);
-    }
-    // jumping
-    else if (this.isJumpingSingle) {
-        name = ANIMATION_HERO_JUMP;
-        //if (debugLevel===1) PlayState.game.debug.body(this);
-    }
-    else if (this.isJumpingExtra) {
-        name = ANIMATION_HERO_JUMP_EXTRA;
-    }
-    else if (deltaX != 0 && this.touchingDownCount > 0 && !this.isSliding) {
-        name = ANIMATION_HERO_RUN;
-    }
-    else if (this.isCrouching) {
-        name = ANIMATION_HERO_CROUCH;
-    }
-    else if (this.isSliding) {
-        name = ANIMATION_HERO_SLIDING;
-    }
-
-    return name;
-};
-
-// #endregion Hero
+// #endregion Hero Animations
 
 // #region Loading State
 
@@ -421,12 +187,14 @@ LoadingState.preload = function () {
 
     this.game.load.image('key', 'images/key.png');
 
-    this.game.load.spritesheet('decoration', 'images/decor.png', 42, 42);
+    const HERO_DEFAULT_SPRIE_WIDTH = 100;
+    const HERO_DEFAULT_SPRITE_HEIGHT = 73;
     this.game.load.spritesheet('hero', 'images/bowen/bowen_adventurer_transparent.png', HERO_DEFAULT_SPRIE_WIDTH, HERO_DEFAULT_SPRITE_HEIGHT, 95);
     this.game.load.spritesheet('coin', 'images/coin_animated.png', 22, 22);
     this.game.load.spritesheet('spider', 'images/spider.png', 42, 32);
     this.game.load.spritesheet('door', 'images/door.png', 42, 66);
     this.game.load.spritesheet('icon:key', 'images/key_icon.png', 34, 30);
+    this.game.load.spritesheet('decoration', 'images/decor.png', 42, 42);
 
     this.game.load.audio('sfx:jump', 'audio/jump.wav');
     this.game.load.audio('sfx:coin', 'audio/coin.wav');
@@ -446,14 +214,9 @@ LoadingState.create = function () {
 
 let PlayState = {};
 
-// Restart the game once we reach this many levels:
-// TRY: Get this from JSON files.
-var LEVEL_COUNT = 999;
-
-var button;
-
 // Game State 1: Init
 PlayState.init = function (data) {
+    // ToDo: make this configurable. The player should be able to choose which keys map to which actions.
     // Translate keyboard keys to input:
     this.keys = this.game.input.keyboard.addKeys({
         left: Phaser.KeyCode.LEFT,
@@ -520,7 +283,7 @@ function unpauseGame(event){
     */
     PlayState.game.paused = false;
     
-    touchButtonA.alpha = controlsAlpha;
+    //touchButtonA.alpha = controlsAlpha;
 };
 
 function touchButtonSettingsPress (thisButton) {
@@ -1023,7 +786,7 @@ PlayState._handleInput = function () {
         xDir = 0;
     }
     this.hero.move(xDir);
-
+    
     if (this.keys.D.isDown) {
         if (keyPressToggleD) {
             keyPressToggleD = false;
@@ -1444,10 +1207,18 @@ PlayState._setMazeDataFromJson = function (data) {
         initialHeroX = heroNode.y*pathWidth + (pathWidth/2);
         initialHeroY = heroNode.x*pathWidth + (pathWidth/4);
     }
-    this.hero = new Hero(this.game, initialHeroX, initialHeroY);
+
+    // Hero (classic):
+    //this.hero = new Hero2(this.game, initialHeroX, initialHeroY);
+    //this.game.add.existing(this.hero);
+    // Hero (ES6):
+    let hero2 = new Hero2(this.game, initialHeroX, initialHeroY, 'hero');
+    hero2.addAnimations(heroAnimations);
+    this.hero = hero2
+    this.game.add.existing(this.hero);
+
     //#endregion Hero
     
-    this.game.add.existing(this.hero);
 };
 
 PlayState._setLevelDataFromJson = function (data) {
@@ -1503,7 +1274,7 @@ PlayState._setLevelDataFromJson = function (data) {
     // spawn hero
     let initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * 32 : data.hero.x);
     let initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * 32 : data.hero.y);
-    this.hero = new Hero(this.game, initialHeroX, initialHeroY);
+    this.hero = new Hero2(this.game, initialHeroX, initialHeroY);
     this.game.add.existing(this.hero);
 };
 
@@ -1519,6 +1290,9 @@ PlayState._loadLevel = function (data) {
     this.enemyWalls.visible = false;
 
     this.bgDecoration = this.game.add.group();
+
+    // enable gravity, from either input JSON or constant:
+    this.game.physics.arcade.gravity.y = data.gravity;
     
     if (data.maze) {
         this._setMazeDataFromJson(data);
@@ -1544,9 +1318,6 @@ PlayState._loadLevel = function (data) {
     if (data.coins) {
         data.coins.forEach(this._spawnCoin, this);
     }
-
-    // enable gravity
-    this.game.physics.arcade.gravity.y = GRAVITY;
 
     this.game.camera.follow(this.hero);
 };
