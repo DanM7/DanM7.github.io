@@ -1,27 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
 <head>
-	<meta charset="UTF-8">
-	<title>Phaser Template</title>
-	<link rel="stylesheet" href="styles/main.css">
-
-	<link rel="manifest" href="manifest.json">
-
-	<script>
-	if (navigator.serviceWorker) {
-	  navigator.serviceWorker.register('service-worker.js')
-	    .then(function(){
-	    	console.log('service worker installed');
-	    })
-	    .catch(function(err){
-	    	console.log('Error', err);
-	    });
-	}
-	</script>
-	
+    <title>danm7</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            background-color: black;
+            color: green;
+        }
+        canvas {
+            margin: 0 auto;
+        }
+    </style>
 </head>
 <body>
-	<script src="scripts/phaser.min.js"></script>
-	<script src="scripts/game.js"></script>
+    <div id="game"></div>
+    <script type="module">
+        window.addEventListener('unhandledrejection', event => {
+            // Prevent error output on the console:
+            event.preventDefault();
+            document.getElementById("game").innerHTML += 
+                'Rejection reason: ' + event.reason;
+        });
+        window.onpossiblyunhandledexception = function(){
+            window.onerror.apply(this, arguments); // call
+        }
+        window.onerror = function(err){
+            document.getElementById("game").innerHTML += err;
+        }
+
+        try{
+            // v1:
+            // (async () => {
+            // const moduleSpecifier = './js/main.js';
+            // await import(moduleSpecifier);
+            // })();
+
+            // v2:
+            // const moduleSpecifier = './js/main.js';
+            // import(moduleSpecifier);
+        }
+        catch (exception) {
+            alert(exception.message);
+        }
+    </script>
+    <script src="js/3rdparty/phaser.min.js"></script>
+    <script src="js/3rdparty/astar.js"></script>
+    <script src="js/maze_framework.js"></script>
+    <script src="js/main.js" type="module"></script>
 </body>
-</html>
