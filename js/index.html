@@ -1,0 +1,50 @@
+<!doctype html>
+<head>
+    <title>danm7</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            background-color: black;
+            color: green;
+        }
+        canvas {
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="game"></div>
+    <script type="module">
+        window.addEventListener('unhandledrejection', event => {
+            // Prevent error output on the console:
+            event.preventDefault();
+            document.getElementById("game").innerHTML += 
+                'Rejection reason: ' + event.reason;
+        });
+        window.onpossiblyunhandledexception = function(){
+            window.onerror.apply(this, arguments); // call
+        }
+        window.onerror = function(err){
+            document.getElementById("game").innerHTML += err;
+        }
+
+        try{
+            // v1:
+            // (async () => {
+            // const moduleSpecifier = './js/main.js';
+            // await import(moduleSpecifier);
+            // })();
+
+            // v2:
+            // const moduleSpecifier = './js/main.js';
+            // import(moduleSpecifier);
+        }
+        catch (exception) {
+            alert(exception.message);
+        }
+    </script>
+    <script src="js/3rdparty/phaser.min.js"></script>
+    <script src="js/3rdparty/astar.js"></script>
+    <script src="js/maze_framework.js"></script>
+    <script src="js/main.js" type="module"></script>
+</body>
