@@ -30,5 +30,7 @@
     "key": {
         "doorId": 1,
         "pos": "farthest"
-    }
+    },
+
+    "gravity": 1200
 }
