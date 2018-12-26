@@ -158,7 +158,7 @@ LoadingState.preload = function () {
     this.game.load.json('level:0', 'data/level00.json');
     this.game.load.json('level:1', 'data/level01.json');
     this.game.load.json('level:2', 'data/level02.json');
-    this.game.load.json('level:3', 'data/maze001.json');
+    this.game.load.json('level:3', 'data/maze002.json');
 
     // Controls:
     this.game.load.image('controlsUp', 'images/controls/flatDark/flatDark02.png');
