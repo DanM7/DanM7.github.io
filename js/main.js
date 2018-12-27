@@ -133,33 +133,19 @@ function getFps(thisLoop, lastLoop) {
 // #region Hero Animations
 
 // ToDo ES6: load this from JSON. This should be game-specific data, not hardcoded.
-
-const ANIMATION_HERO_IDLE = 'animationHeroIdle';
-const ANIMATION_HERO_SLIDING = 'animationHeroSliding';
-const ANIMATION_HERO_CROUCH = 'animationHeroCrouch';
-const ANIMATION_HERO_RUN = 'animationHeroRun';
-const ANIMATION_HERO_JUMP = 'animationHeroJump';
-const ANIMATION_HERO_JUMP_EXTRA = 'animationHeroJumpExtra';
-const ANIMATION_HERO_WALL_JUMP_PAUSE = 'animationHeroWallJumpPause';
-const ANIMATION_HERO_FALL = "animationHeroFall"
-const ANIMATION_HERO_LEDGE_GRAB = 'animationHeroLedgeGrab';
-const ANIMATION_HERO_LEDGE_PULLUP = 'animationHeroLedgePullup';
-const ANIMATION_HERO_SWORD_DRAW = 'animationHeroSwordDraw';
-const ANIMATION_HERO_SWORD_ATTACK_BASIC = 'animationHeroSwordAttackBasic';
-
 // animations ('name', [frames], fps, looped?)
 let heroAnimations = [
-    new animationData(ANIMATION_HERO_IDLE, [0, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0, 0], 4, true),
-    new animationData(ANIMATION_HERO_CROUCH, [4, 4, 4, 4, 4, 5, 6, 7, 4, 4, 4, 4], 4, true),
-    new animationData(ANIMATION_HERO_RUN, [8, 9, 10, 11, 12, 13], 8, true),
-    new animationData(ANIMATION_HERO_SLIDING, [24, 25, 26, 27], 8, false), // ToDo: add 28 is initial in-between;
-    new animationData(ANIMATION_HERO_LEDGE_GRAB, [29, 30, 31, 30], 2, true),
-    new animationData(ANIMATION_HERO_LEDGE_PULLUP, [33, 34, 35, 36, 37], 8, false),
-    new animationData(ANIMATION_HERO_SWORD_DRAW, [69, 70, 71, 72, 73], 8, false),
-    new animationData(ANIMATION_HERO_WALL_JUMP_PAUSE, [79, 80], 4, true),
-    new animationData(ANIMATION_HERO_JUMP, [14, 15, 16, 17], 12, false),// ToDo: loop last few frames of these 2 and split them so they're the initial action then the loop.
-    new animationData(ANIMATION_HERO_JUMP_EXTRA, [18, 19, 20, 21], 12, true),
-    new animationData(ANIMATION_HERO_FALL, [17, 22, 23], 8, false),
+    new animationData('animationHeroIdle', [0, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0, 0], 4, true),
+    new animationData('animationHeroCrouch', [4, 4, 4, 4, 4, 5, 6, 7, 4, 4, 4, 4], 4, true),
+    new animationData('animationHeroRun', [8, 9, 10, 11, 12, 13], 8, true),
+    new animationData('animationHeroSliding', [24, 25, 26, 27], 8, false), // ToDo: add 28 is initial in-between;
+    new animationData('animationHeroLedgeGrab', [29, 30, 31, 30], 2, true),
+    new animationData('animationHeroLedgePullup', [33, 34, 35, 36, 37], 8, false),
+    new animationData('animationHeroSwordDraw', [69, 70, 71, 72, 73], 8, false),
+    new animationData('animationHeroWallJumpPause', [79, 80], 4, true),
+    new animationData('animationHeroJump', [14, 15, 16, 17], 12, false),// ToDo: loop last few frames of these 2 and split them so they're the initial action then the loop.
+    new animationData('animationHeroJumpExtra', [18, 19, 20, 21], 12, true),
+    new animationData('animationHeroFall', [17, 22, 23], 8, false),
     new animationData('die', [5, 6, 5, 6, 5, 6, 5, 6], 12)
 ];
 
