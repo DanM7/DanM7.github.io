@@ -224,6 +224,8 @@ LoadingState.preload = function () {
     this.game.load.audio('sfx:stomp', 'audio/stomp.wav');
     this.game.load.audio('sfx:door', 'audio/door.wav');
     this.game.load.audio('bgm', ['audio/bgm.mp3', 'audio/bgm.ogg']);
+
+    alert("preload!");
 };
 
 LoadingState.create = function () {
@@ -1533,6 +1535,7 @@ PlayState._createHud = function () {
 //#endregion Play State
 
 window.onload = function () {
+    alert("onload start");
     // if (sourceMobile) {
     //     gameWidth = 1136;
     //     gameHeight = 640;
