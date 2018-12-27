@@ -25,6 +25,7 @@ const HERO_DEFAULT_SIZE_OFFSET_Y = 13;
 class Hero2 extends Phaser.Sprite {
     constructor(game, x, y, spriteName) {
         super(game, x + 40, y, spriteName);
+        alert("Hero2 constructor start")
         this.anchor.set(0.5, 0.5);
 
         // physics properties
@@ -64,6 +65,7 @@ class Hero2 extends Phaser.Sprite {
 
         // Make starting animation separate funcion:
         this.animations.play('animationHeroIdle');
+        alert("Hero2 constructor end")
     }
 
     //#region Animations
