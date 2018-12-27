@@ -211,7 +211,7 @@ LoadingState.preload = function () {
     this.game.load.audio('sfx:door', 'audio/door.wav');
     this.game.load.audio('bgm', ['audio/bgm.mp3', 'audio/bgm.ogg']);
 
-    alert("preload!");
+    //alert("preload!");
 };
 
 LoadingState.create = function () {
@@ -1521,7 +1521,8 @@ PlayState._createHud = function () {
 //#endregion Play State
 
 window.onload = function () {
-    alert("onload start");
+    //alert("onload start");
+    
     // if (sourceMobile) {
     //     gameWidth = 1136;
     //     gameHeight = 640;
@@ -1536,7 +1537,8 @@ window.onload = function () {
     game.state.add('loading', LoadingState);
     game.state.start('loading');
 
-    alert("onload done");
+    //alert("onload done");
+    
     // ToDO: Mobile:
     //if (!game.device.desktop) { 
         //game.input.onDown.add(gofull, this); 
