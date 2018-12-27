@@ -1494,7 +1494,7 @@ PlayState._createHud = function () {
     
     let controlButtons = [
         touchButtonA,
-        touchButtonFullScreen,
+        //touchButtonFullScreen,
         touchButtonSettings,
         buttonUp,
         buttonDown, 
