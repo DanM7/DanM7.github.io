@@ -106,6 +106,28 @@ function shadeColor2(color, percent) {
     //return (newR + newG + newB);
 }
 
+function addBackgroundToGame(currentGame, backgroundImageName) {
+    let img = currentGame.cache.getImage(backgroundImageName);
+    let bg = currentGame.add.image(
+        currentGame.world.centerX - img.width/2,
+        currentGame.world.centerY - img.height/2,//(currentGame.world.height/-2) + backgroundImageName.height*2, 
+        backgroundImageName
+    );
+    bg.fixedToCamera = true;
+}
+
+function padLeft(number, width, padInput) {
+    let padChar = (padInput === null) ? ' ' : padInput;
+    width -= number.toString().length;
+    return (width > 0) ? 
+        new Array(width + (/\./.test(number) ? 2 : 1)).join(padChar) + number : 
+        number + ""; // always return a string
+}
+
+function getFps(thisLoop, lastLoop) {
+    return (1000 / (thisLoop - lastLoop))|0;
+}
+
 // #endregion Globals & Constants
 
 // #region Hero Animations
@@ -413,16 +435,6 @@ function touchButtonFullScreenPress (thisButton) {
     }
 }
 
-function addBackgroundToGame(currentGame, backgroundImageName) {
-    let img = currentGame.cache.getImage(backgroundImageName);
-    let bg = currentGame.add.image(
-        currentGame.world.centerX - img.width/2,
-        currentGame.world.centerY - img.height/2,//(currentGame.world.height/-2) + backgroundImageName.height*2, 
-        backgroundImageName
-    );
-    bg.fixedToCamera = true;
-}
-
 // Game State 3: Create (create game entities and set up world here):
 PlayState.create = function () {
     // fade in (from black)
@@ -462,18 +474,6 @@ PlayState.create = function () {
     // create UI score boards
     this._createHud();
 };
-
-function padLeft(number, width, padInput) {
-    let padChar = (padInput === null) ? ' ' : padInput;
-    width -= number.toString().length;
-    return (width > 0) ? 
-        new Array(width + (/\./.test(number) ? 2 : 1)).join(padChar) + number : 
-        number + ""; // always return a string
-}
-
-function getFps(thisLoop, lastLoop) {
-    return (1000 / (thisLoop - lastLoop))|0;
-}
 
 // Game State 4: Update
 PlayState.update = function () {
@@ -1292,7 +1292,7 @@ PlayState._loadLevel = function (data) {
     this.bgDecoration = this.game.add.group();
 
     // enable gravity, from either input JSON or constant:
-    this.game.physics.arcade.gravity.y = data.gravity;
+    this.game.physics.arcade.gravity.y = data.gravity || 1200;
     
     if (data.maze) {
         this._setMazeDataFromJson(data);
@@ -1547,6 +1547,7 @@ window.onload = function () {
     game.state.add('loading', LoadingState);
     game.state.start('loading');
 
+    alert("onload done");
     // ToDO: Mobile:
     //if (!game.device.desktop) { 
         //game.input.onDown.add(gofull, this); 
