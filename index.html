@@ -27,24 +27,9 @@
         window.onerror = function(err){
             document.getElementById("game").innerHTML += err;
         }
-
-        try{
-            // v1:
-            // (async () => {
-            // const moduleSpecifier = './js/main.js';
-            // await import(moduleSpecifier);
-            // })();
-
-            // v2:
-            // const moduleSpecifier = './js/main.js';
-            // import(moduleSpecifier);
-        }
-        catch (exception) {
-            alert(exception.message);
-        }
     </script>
     <script src="js/3rdparty/phaser.min.js"></script>
     <script src="js/3rdparty/astar.js"></script>
     <script src="js/maze_framework.js"></script>
-    <script src="js/main.js" type="module"></script>
+    <script src="js/main.js?v=20181226" type="module"></script>
 </body>
