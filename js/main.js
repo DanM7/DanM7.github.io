@@ -1,6 +1,6 @@
 // #region Imports & Classes
 
-import Hero2 from '../js/sidescroller/Hero2.js';
+//import Hero2 from '../js/sidescroller/Hero2.js';
 
 class animationData {
     constructor(name, frames, fps, looped) {
