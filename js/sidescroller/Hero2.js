@@ -238,4 +238,4 @@ class Hero2 extends Phaser.Sprite {
     //#endregion Player Input
 }
 
-export default Hero2;
+//export default Hero2;
