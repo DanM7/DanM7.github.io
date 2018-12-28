@@ -171,15 +171,15 @@ LoadingState.preload = function () {
     // Controls:
     this.game.load.image('controlsUp', 'images/controls/flatDark/flatDark02.png');
     this.game.load.image('controlsDown', 'images/controls/flatDark/flatDark09.png');
-    this.game.load.image('controlsLeft', 'images/controls/flatDark/flatDark04.png');
-    this.game.load.image('controlsRight', 'images/controls/flatDark/flatDark05.png');
+    this.game.load.image('controlsLeft', 'images/controls/flatDark/flatDark23.png');
+    this.game.load.image('controlsRight', 'images/controls/flatDark/flatDark24.png');
     this.game.load.image('controlsPadCircle', 'images/controls/flatDark/flatDark06.png');
     this.game.load.image('controlsDPad', 'images/controls/flatDark/flatDark03.png');
     this.game.load.image('touchButtonA', 'images/controls/flatDark/flatDark35.png');
     this.game.load.image('touchButtonB', 'images/controls/flatDark/flatDark36.png');
     this.game.load.image('controlsFullScreen', 'images/controls/flatDark/flatDark29.png');
     this.game.load.image('controlsFullScreenExit', 'images/controls/flatDark/flatDark34.png');
-    this.game.load.image('controlsSettings', 'images/controls/flatDark/flatDark30.png');
+    this.game.load.image('controlsSettings', 'images/controls/flatDark/flatDark13.png');
 
     // Fonts:
     this.game.load.image('font:numbers', 'images/numbers.png');
@@ -1429,22 +1429,22 @@ PlayState._createHud = function () {
     buttonDown.events.onInputUp.add(touchButtonDownRelease, this);
 
     let buttonLeft = this.game.add.sprite(
-        controlsX + 4, 
-        buttonUpY + controlHeightUD/2 + controlsPad - 1, 
+        controlsX,
+        gameHeight - (60 + 60*buttonScale), 
         'controlsLeft'
     );
-    buttonLeft.scale.setTo(2, 2);
+    buttonLeft.scale.setTo(buttonScale, buttonScale);
     buttonLeft.events.onInputDown.add(touchButtonLeftPress, this);
     buttonLeft.events.onInputOver.add(touchButtonLeftPress, this);
     buttonLeft.events.onInputUp.add(touchButtonLeftRelease, this);
     buttonLeft.events.onInputOut.add(touchButtonLeftRelease, this);
 
     let buttonRight = this.game.add.sprite(
-        buttonLeft.x + controlWidthLR - 1 + 2*directionButtonsSpacingX, // -3 or -1
+        buttonLeft.x + buttonLeft.width + 2*buttonScale,//buttonLeft.x + controlWidthLR - 1 + 2*directionButtonsSpacingX, // -3 or -1
         buttonLeft.y, 
         'controlsRight'
     );
-    buttonRight.scale.setTo(2, 2);
+    buttonRight.scale.setTo(buttonScale, buttonScale);
     buttonRight.events.onInputDown.add(touchButtonRightPress, this);
     buttonRight.events.onInputOver.add(touchButtonRightPress, this);
     buttonRight.events.onInputUp.add(touchButtonRightRelease, this);
