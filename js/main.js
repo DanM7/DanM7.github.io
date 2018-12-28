@@ -50,13 +50,13 @@ let debugTextKeyD = "";//"Keys: Up=n; Down=n; Left=n; Right=n; D=n; Debug=" + (d
 let debugLabelFps;
 let debugTextFps;
 
-var buttonUp;
-var buttonDown;
-var buttonLeft;
-var buttonRight;
-//var controlsDPadCircle;
-var touchButtonA;
-var touchButtonB;
+// var buttonUp;
+// var buttonDown;
+// var buttonLeft;
+// var buttonRight;
+// var controlsDPadCircle;
+// var touchButtonA;
+// var touchButtonB;
 
 var buttonUpX = controlsX + controlWidthLR - controlWidthLR/2 + controlsPad;
 var buttonUpY = gameHeight - screenPad - controlHeightUD*2 - controlsPad;
@@ -1433,18 +1433,22 @@ PlayState._createHud = function () {
         buttonUpY + controlHeightUD/2 + controlsPad - 1, 
         'controlsLeft'
     );
-    buttonLeft.scale.setTo(1.5, 1.5);
+    buttonLeft.scale.setTo(2, 2);
     buttonLeft.events.onInputDown.add(touchButtonLeftPress, this);
+    buttonLeft.events.onInputOver.add(touchButtonLeftPress, this);
     buttonLeft.events.onInputUp.add(touchButtonLeftRelease, this);
+    buttonLeft.events.onInputOut.add(touchButtonLeftRelease, this);
 
     let buttonRight = this.game.add.sprite(
         buttonLeft.x + controlWidthLR - 1 + 2*directionButtonsSpacingX, // -3 or -1
         buttonLeft.y, 
         'controlsRight'
     );
-    buttonRight.scale.setTo(1.5, 1.5);
+    buttonRight.scale.setTo(2, 2);
     buttonRight.events.onInputDown.add(touchButtonRightPress, this);
+    buttonRight.events.onInputOver.add(touchButtonRightPress, this);
     buttonRight.events.onInputUp.add(touchButtonRightRelease, this);
+    buttonRight.events.onInputOut.add(touchButtonRightRelease, this);
 
     //#endregion Bottom Left
     
@@ -1457,7 +1461,9 @@ PlayState._createHud = function () {
     );
     touchButtonA.scale.setTo(buttonScale, buttonScale);
     touchButtonA.events.onInputDown.add(touchButtonAPress, this);
+    touchButtonA.events.onInputOver.add(touchButtonAPress, this);
     touchButtonA.events.onInputUp.add(touchButtonARelease, this);
+    touchButtonA.events.onInputOut.add(touchButtonARelease, this);
 
     //#endregion Bottom Right
     
