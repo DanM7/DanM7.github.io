@@ -20,24 +20,6 @@ const controlHeightLR = 62;
 const screenPad = 20;
 const controlsPad = 10;
 
-let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-let isMobile = isMobileiOs;
-
-// let gameWidth = (isMobileiOs) ? screen.width*2 : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
-// let gameHeight = (isMobileiOs) ? screen.height*2 : window.innerHeight - 40;
-let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
-let gameHeight = window.innerHeight - 40;
-
-// if (Math.abs(window.orientation) == 90) {
-//     let tempDim = gameWidth;
-//     gameWidth = gameHeight;
-//     gameHeight = tempDim;
-// }
-
-const controlsX = 10;
-var buttonUpX = controlsX + controlWidthLR - controlWidthLR/2 + controlsPad;
-var buttonUpY = gameHeight - screenPad - controlHeightUD*2 - controlsPad;
-
 var directionButtonsSpacingX = 20;
 var buttonScale = 2;
 
@@ -106,8 +88,8 @@ class PlayState {
         buttonRight.alpha = 0;
         
         let touchButtonACustom = this.game.add.sprite(
-            gameWidth - (60 + 60*buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
-            gameHeight - (60 + 60*buttonScale),
+            this.game.width - (60 + 60*buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
+            this.game.height - (60 + 60*buttonScale),
             'touchButtonA'
         );
         touchButtonACustom.scale.setTo(buttonScale, buttonScale);
@@ -812,8 +794,8 @@ class PlayState {
     }
     
     _setLevelDataFromJson(data) {
-        let boundW = (data.world.w < gameWidth) ? gameWidth : data.world.w;
-        let boundH = (data.world.h < gameHeight) ? gameHeight : data.world.h;
+        let boundW = (data.world.w < this.game.width) ? this.game.width : data.world.w;
+        let boundH = (data.world.h < this.game.height) ? this.game.height : data.world.h;
         this.game.world.setBounds(0, 0, boundW, boundH);
     
         // spawn level landscape:
@@ -978,7 +960,10 @@ class PlayState {
 
     _createHud() {
         let hud = this.game.add.group();
-
+        const controlsX = 10;
+        let buttonUpX = controlsX + controlWidthLR - controlWidthLR/2 + controlsPad;
+        let buttonUpY = this.game.height - screenPad - controlHeightUD*2 - controlsPad;
+        
         //#region Upper Left
 
         const NUMBERS_STR = '0123456789X ';
@@ -1015,7 +1000,7 @@ class PlayState {
 
             buttonLeft = this.game.add.sprite(
                 controlsX,
-                gameHeight - (60 + 60 * buttonScale),
+                this.game.height - (60 + 60 * buttonScale),
                 'controlsLeft'
             );
             buttonLeft.scale.setTo(buttonScale, buttonScale);
@@ -1040,8 +1025,8 @@ class PlayState {
             //#region Bottom Right
 
             touchButtonA = this.game.add.sprite(
-                gameWidth - (60 + 60 * buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
-                gameHeight - (60 + 60 * buttonScale),
+                this.game.width - (60 + 60 * buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
+                this.game.height - (60 + 60 * buttonScale),
                 'touchButtonA'
             );
             touchButtonA.scale.setTo(buttonScale, buttonScale);
@@ -1055,7 +1040,7 @@ class PlayState {
             //#region Top Right
 
             // let touchButtonFullScreen = this.game.add.sprite(
-            //     gameWidth - 170,
+            //     this.game.width - 170,
             //     10,
             //     'controlsFullScreen'
             // );
@@ -1063,7 +1048,7 @@ class PlayState {
             //touchButtonFullScreen.events.onInputOver.add(this.touchButtonFullScreenPress, this);
 
             let touchButtonSettings = this.game.add.sprite(
-                gameWidth - 70,
+                this.game.width - 70,
                 10,
                 'controlsSettings'
             );
