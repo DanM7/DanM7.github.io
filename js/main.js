@@ -13,31 +13,16 @@ class animationData {
 
 // #region Globals & Constants
 
-let debugLevel = 0;
-let maxDebugLevel = 4; // 0=none;1=keys;2=bodies;3=camera;4=touch;
+//let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+//let isMobile = isMobileiOs;
 
-const controlsAlpha = 0.5;
-const controlsAlphaDown = 0.8;
-const controlsX = 10;
-//const controlsAlphaCardinal = 0.5;
-const controlWidthUD = 62;
-const controlHeightUD = 76;
-const controlWidthLR = 76;
-const controlHeightLR = 62;
-const screenPad = 20;
-const controlsPad = 10;
-
-let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-let isMobile = isMobileiOs;
-let gameWidth = (isMobileiOs) ? screen.width*2 : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
-let gameHeight = (isMobileiOs) ? screen.height*2 : window.innerHeight - 40;
+//var gameWidth = (isMobileiOs) ? screen.width*2 : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
+//var gameHeight = (isMobileiOs) ? screen.height*2 : window.innerHeight - 40;
 // if (Math.abs(window.orientation) == 90) {
 //     let tempDim = gameWidth;
 //     gameWidth = gameHeight;
 //     gameHeight = tempDim;
 // }
-
-let keyPressToggleD = true;
 
 let debugLabel1;
 let debugText1 = "";
@@ -47,9 +32,6 @@ let debugTextKeyD = "";//"Keys: Up=n; Down=n; Left=n; Right=n; D=n; Debug=" + (d
 
 let debugLabelFps;
 let debugTextFps;
-
-var buttonUpX = controlsX + controlWidthLR - controlWidthLR/2 + controlsPad;
-var buttonUpY = gameHeight - screenPad - controlHeightUD*2 - controlsPad;
 
 // By default, we go to the next level.
 var nextLevelIncrement = 1;
