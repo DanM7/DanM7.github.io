@@ -13,16 +13,16 @@ class animationData {
 
 // #region Globals & Constants
 
-//let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-//let isMobile = isMobileiOs;
+let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+let isMobile = isMobileiOs;
 
-//var gameWidth = (isMobileiOs) ? screen.width*2 : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
-//var gameHeight = (isMobileiOs) ? screen.height*2 : window.innerHeight - 40;
-// if (Math.abs(window.orientation) == 90) {
-//     let tempDim = gameWidth;
-//     gameWidth = gameHeight;
-//     gameHeight = tempDim;
-// }
+var gameWidth = (isMobileiOs) ? screen.width*2 : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
+var gameHeight = (isMobileiOs) ? screen.height*2 : window.innerHeight - 40;
+if (Math.abs(window.orientation) == 90) {
+    let tempDim = gameWidth;
+    gameWidth = gameHeight;
+    gameHeight = tempDim;
+}
 
 let debugLabel1;
 let debugText1 = "";
@@ -127,8 +127,8 @@ LoadingState.create = function () {
 
 window.onload = function () {
     let game = new Phaser.Game(
-        gameWidth, 
-        gameHeight, 
+        window.innerWidth - 40, 
+        window.innerHeight - 40, 
         Phaser.AUTO, 
         'game'
     );
