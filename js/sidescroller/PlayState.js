@@ -5,6 +5,39 @@ var buttonDown;
 var buttonLeft;
 var buttonRight;
 
+let keyPressToggleD = true;
+
+let debugLevel = 0;
+let maxDebugLevel = 4; // 0=none;1=keys;2=bodies;3=camera;4=touch;
+
+const controlsAlpha = 0.5;
+const controlsAlphaDown = 0.8;
+//const controlsAlphaCardinal = 0.5;
+const controlWidthUD = 62;
+const controlHeightUD = 76;
+const controlWidthLR = 76;
+const controlHeightLR = 62;
+const screenPad = 20;
+const controlsPad = 10;
+
+let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+let isMobile = isMobileiOs;
+
+// let gameWidth = (isMobileiOs) ? screen.width*2 : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
+// let gameHeight = (isMobileiOs) ? screen.height*2 : window.innerHeight - 40;
+let gameWidth = window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
+let gameHeight = window.innerHeight - 40;
+
+// if (Math.abs(window.orientation) == 90) {
+//     let tempDim = gameWidth;
+//     gameWidth = gameHeight;
+//     gameHeight = tempDim;
+// }
+
+const controlsX = 10;
+var buttonUpX = controlsX + controlWidthLR - controlWidthLR/2 + controlsPad;
+var buttonUpY = gameHeight - screenPad - controlHeightUD*2 - controlsPad;
+
 var directionButtonsSpacingX = 20;
 var buttonScale = 2;
 
