@@ -31,11 +31,11 @@ let isMobileiOs = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStre
 let isMobile = isMobileiOs;
 let gameWidth = (isMobileiOs) ? screen.width*2 : window.innerWidth - 40; // window.visualViewport.width or window.innerWidth?
 let gameHeight = (isMobileiOs) ? screen.height*2 : window.innerHeight - 40;
-if (Math.abs(window.orientation) == 90) {
-    let tempDim = gameWidth;
-    gameWidth = gameHeight;
-    gameHeight = tempDim;
-}
+// if (Math.abs(window.orientation) == 90) {
+//     let tempDim = gameWidth;
+//     gameWidth = gameHeight;
+//     gameHeight = tempDim;
+// }
 
 let keyPressToggleD = true;
 
