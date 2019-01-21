@@ -31,6 +31,8 @@ class PlayState {
         this.isMobile = isMobile;
 
         this.keyUpDurationDown = null;
+
+        this.mapBounds = null;
     }
     unpauseGame(){
         this.game.paused = false;
@@ -165,16 +167,10 @@ class PlayState {
         // bg.fixedToCamera = true;
         addBackgroundToGame(this.game, 'background');
     
-        // ToDo: something other than the json load needs to determine if
-        // the level is an actual level or a maze. For that matter, there needs
-        // to be some initial json load that says what json should be loaded next. 
-        // if (this.game.data.maze) {
-        //     this._loadLevel(this.game.cache.getJSON(`maze:${this.level}`));
-        // }
-        // else {
-        //     this._loadLevel(this.game.cache.getJSON(`level:${this.level}`));
-        // }
-        this._loadLevel(this.game.cache.getJSON(`level:${this.level}`));
+        // ToDo: there needs to be some initial json load that says 
+        // what json should be loaded next.
+        let jsonData = this.game.cache.getJSON(`level:${this.level}`);
+        this._loadLevel(jsonData);
     
         this.game.input.onDown.add(this.unpauseGame, this);
     
@@ -636,13 +632,17 @@ class PlayState {
         var graphics = this.game.add.graphics(0, 0);
     
         // set a fill and line style
-        let randomColor = Math.random() * 0xffffff;
+        //let randomColor = Math.random() * 0xffffff;
         let randomColorShade = Math.random() * 0xffffff;//LightenDarkenColor(randomColor, 20);
-        graphics.beginFill(randomColor);
-    
-        let includeBorder = true;
-        let mapBounds = MAZE.buildMap(width, height, includeBorder);
-        let boundingBoxes = MAZE.buildBoundingBoxes(mapBounds, wall);
+        //graphics.beginFill(randomColor);
+
+        this.mapBounds = MAZE.buildMap(width, height, true);
+        
+        this.mapBoundsTiles = this.game.add.group();
+
+        this._addTilesToGame(wall);
+
+        let boundingBoxes = MAZE.buildBoundingBoxes(this.mapBounds, wall);
         boundingBoxes.forEach(function (bbox) {
             var landItemBound = this.game.add.sprite(bbox.x, bbox.y);
             landItemBound.width = bbox.w;
@@ -657,8 +657,8 @@ class PlayState {
             
             //landItemBound.tint = Math.random() * 0xffffff;
             //this.game.debug.body(landItemBound);
-            graphics.lineStyle(4, randomColorShade, 1);
-            graphics.drawRect(bbox.x, bbox.y, bbox.w, bbox.h);
+            //graphics.lineStyle(4, randomColorShade, 1);
+            //graphics.drawRect(bbox.x, bbox.y, bbox.w, bbox.h);
     
             this.landscapeBounds.add(landItemBound);
         }, this);
@@ -686,11 +686,11 @@ class PlayState {
             initialDoorY = data.door.y;
         }
         else if (data.door.pos && data.door.pos === "random") {
-            nodesWithWallUnderneath = MAZE.getNodesWithWallUnderneath(mapBounds);
+            nodesWithWallUnderneath = MAZE.getNodesWithWallUnderneath(this.mapBounds);
     
             // The space 1 below (move 0 x spaces, move down 1 y space) needs to be a wall:
             let requireBorderUnderneath = [ { "x": 0, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL } ];
-            let freeSpace = MAZE.getRandomSpaceByValue(mapBounds, MAZE.MAP_SPACE_FREE, requireBorderUnderneath);
+            let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, MAZE.MAP_SPACE_FREE, requireBorderUnderneath);
             mapPosDoorX = freeSpace.columnIndex;
             mapPosDoorY = freeSpace.rowIndex;
             initialDoorX = mapPosDoorX*pathWidth + (pathWidth/2);
@@ -713,13 +713,13 @@ class PlayState {
             initialKeyY = data.key.y;
         }
         else if (data.key.pos && data.key.pos === "random") {
-            let freeSpace = MAZE.getRandomSpaceByValue(mapBounds, 0);
+            let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, 0);
             initialKeyX = freeSpace.columnIndex*pathWidth + (pathWidth/2);
             initialKeyY = freeSpace.rowIndex*pathWidth + (pathWidth/2);
         }
         else if (data.key.pos && data.key.pos === "farthest") {
             let aStarResult = MAZE.getFarthestFreeSpace(
-                mapBounds, 
+                this.mapBounds, 
                 new GridNode(mapPosDoorX, mapPosDoorY, MAZE.MAP_SPACE_FREE)
             );
             // The astar lib off of github swaps the x and y on the nodes;
@@ -745,16 +745,16 @@ class PlayState {
         }
         else if (data.hero.pos && data.hero.pos === "random") {
             let requireBorderUnderneath = [ { "x": 0, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL } ];
-            let freeSpace = MAZE.getRandomSpaceByValue(mapBounds, MAZE.MAP_SPACE_FREE, requireBorderUnderneath);
+            let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, MAZE.MAP_SPACE_FREE, requireBorderUnderneath);
             initialHeroX = freeSpace.columnIndex*pathWidth + (pathWidth/2);
             initialHeroY = freeSpace.rowIndex*pathWidth + (pathWidth/4);
         }
         else if (data.hero.pos && data.hero.pos === "farthest") {
             if (nodesWithWallUnderneath === null) {
-                nodesWithWallUnderneath = MAZE.getNodesWithWallUnderneath(mapBounds);
+                nodesWithWallUnderneath = MAZE.getNodesWithWallUnderneath(this.mapBounds);
             }
             let heroNode = MAZE.getFarthestFreeSpaceTriangle(
-                mapBounds,
+                this.mapBounds,
                 new GridNode(mapPosDoorX, mapPosDoorY, MAZE.MAP_SPACE_FREE),
                 new GridNode(mapPosKeyX, mapPosKeyY, MAZE.MAP_SPACE_FREE),
                 nodesWithWallUnderneath
@@ -791,6 +791,138 @@ class PlayState {
     
         //#endregion Hero
         
+    }
+
+    getWallTileFrame(wall, iMapCol, iMapRow, iTileIndexX, iTileIndexY) {
+        let result = 7; // ToDo: default to center, but how do i know what that is?
+
+        let rowTop = false;
+        let rowMiddle = false;
+        let rowBottom = false;
+
+        let colLeft = false;
+        let colMiddle = false;
+        let colRight = false;
+
+        //#region determine row position
+
+        if (iTileIndexY === 0) {
+            if (typeof this.mapBounds[iMapRow - 1] !== 'undefined' &&
+                this.mapBounds[iMapRow - 1][iMapCol] === MAZE.MAP_SPACE_FREE) {
+                rowTop = true;
+            }
+        }
+        else if (iTileIndexY === (wall-32) / 32) {
+            if (typeof this.mapBounds[iMapRow + 1] !== 'undefined' &&
+                this.mapBounds[iMapRow + 1][iMapCol] === MAZE.MAP_SPACE_FREE) {
+                rowBottom = true;
+            }
+        }
+        else {
+            rowMiddle = true;
+        }
+        
+        //#endregion determine row position
+
+        //#region determine column position
+
+        if (iTileIndexX === 0) {
+            if (this.mapBounds[iMapRow][iMapCol - 1] === MAZE.MAP_SPACE_FREE) {
+                colLeft = true;
+            }
+        }
+        else if (iTileIndexX === (wall-32) / 32) {
+            if (this.mapBounds[iMapRow][iMapCol + 1] === MAZE.MAP_SPACE_FREE) {
+                colRight = true;
+            }
+        }
+        else {
+            colMiddle = true;
+        }
+
+        //#endregion determine column position
+
+        //#region assign frame index
+
+        // ToDo: how do i not hardcode these frame indexes?
+        // 012 345
+        // 678 9AB
+        // CDE FGH
+        
+        if (rowTop) {
+            if (colLeft) {
+                result = 0;
+            }
+            else if (colRight) {
+                result = 2;
+            }
+            else {
+                result = 1;
+            }
+        }
+        else if (rowBottom) {
+            if (colLeft) {
+                result = 12;
+            }
+            else if (colRight) {
+                result = 14;
+            }
+            else {
+                result = 13;
+            }
+        } 
+        else{
+            if (colLeft) {
+                result = 6;
+            }
+            else if (colRight) {
+                result = 8;
+            }
+            else {
+                if (iTileIndexY === 0) {
+                    if (iTileIndexX === 0) {
+                        // top left internal corner:
+                        //result = 1; // 14 is correct but 1 also looks weird!
+                    }
+                    else if (iTileIndexX === (wall-32) / 32) {
+                        // top right internal corner:
+                        //result = 1; // 12 is correct but 1 also looks weird!
+                    }
+                }
+                else if (iTileIndexY === (wall-32) / 32) {
+
+                }
+            }
+        }
+
+        //#endregion assign frame index
+
+        return result;
+    }
+
+    addWallTiles(wall, iMapCol, iMapRow) {
+        // iterate over however large the cell is and draw all the tiles:
+        for (var iTileIndexX = 0; iTileIndexX < (wall / 32); iTileIndexX++) {
+            for (var iTileIndexY = 0; iTileIndexY < (wall / 32); iTileIndexY++) {
+                this.mapBoundsTiles.add(this.game.add.image(
+                    (iMapCol * wall) + iTileIndexX * 32, 
+                    (iMapRow * wall) + iTileIndexY * 32, 
+                    'landscape', 
+                    this.getWallTileFrame(wall, 
+                        iMapCol, iMapRow, iTileIndexX, iTileIndexY)));
+            }
+        }
+    }
+
+    _addTilesToGame(wall) {
+        // iterate over the map bounds and draw the tiles in each cell:
+        for (var iMapCol = 0; iMapCol < this.mapBounds[0].length; iMapCol++) {
+            for (var iMapRow = 0; iMapRow < this.mapBounds.length; iMapRow++) {
+                if (this.mapBounds[iMapRow][iMapCol] === MAZE.MAP_SPACE_WALL) {
+                    this.addWallTiles(wall, iMapCol, iMapRow);
+                }
+            }
+        }
     }
     
     _setLevelDataFromJson(data) {
