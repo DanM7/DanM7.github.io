@@ -98,7 +98,7 @@ LoadingState.preload = function () {
     this.game.load.image('background', 'images/backgrounds/lava_temple.png');
     this.game.load.image('invisible-wall', 'images/invisible_wall.png');
 
-    this.game.load.spritesheet('landscape', 'images/landscape_tileset_32.png', 32, 32, (1408/32)*(384/32)); //, (1408/32)*(384/32)
+    this.game.load.spritesheet('landscape', 'images/backgrounds/landscape_tileset_32_001.png', 32, 32, (192/32)*(128/32)); //, (1408/32)*(384/32)
 
     this.game.load.image('key', 'images/key.png');
 
