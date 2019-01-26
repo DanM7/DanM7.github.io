@@ -33,6 +33,8 @@ class PlayState {
         this.keyUpDurationDown = null;
 
         this.mapBounds = null;
+
+        this.wall = 0;
     }
     unpauseGame(){
         this.game.paused = false;
@@ -188,6 +190,8 @@ class PlayState {
         debugLabel2.text = debugTextKeyD;
         debugLabelFps.text = (fps < 40) ? "FPS: " + fps : "";
     
+        this._addTilesToGame();
+
         this._handleCollisions();
     
         if (this.hero.isLedgeGrabbing || this.hero.isWallJumpPauseL || this.hero.isWallJumpPauseR) {
@@ -217,6 +221,7 @@ class PlayState {
             //this.game.debug.reset();
         }
         else if (debugLevel === 2) {
+            debugText1 = "";
             this.game.debug.bodyInfo(this.hero, 32*2, 32*2);
         }
         else if (debugLevel === 3) {
@@ -360,8 +365,8 @@ class PlayState {
                 }
                 else {
                     debugLevel++;
-                    debugTextKeyD = "Keys: Up=n; Down=n; Left=n; Right=n; D=n; Debug=" + (debugLevel>0 ? "y" : "n") + ";"
-                    debugTextKeyD = debugTextKeyD.replace(" Debug=n;", " Debug=y;");
+                    //debugTextKeyD = "Keys: Up=n; Down=n; Left=n; Right=n; D=n; Debug=" + (debugLevel>0 ? "y" : "n") + ";"
+                    //debugTextKeyD = debugTextKeyD.replace(" Debug=n;", " Debug=y;");
                 }
                 debugTextKeyD = debugTextKeyD.replace(" D=n;", " D=y;");
             }
@@ -461,7 +466,8 @@ class PlayState {
                 touchingDown = true;
     
                 if (debugLevel === 1) {
-                    PlayState.game.debug.body(land);
+                    // ToDo: land is no longer valid in this context.
+                    //this.game.debug.body(land);
                 }
             }
         }
@@ -624,10 +630,10 @@ class PlayState {
         let pathWidth = (data.maze.pathWidth) ? data.maze.pathWidth : 128; // Width of the maze path;
         let width = (data.maze.width) ? data.maze.width : 3; // Game width;
         let height = (data.maze.height) ? data.maze.height : 2; // Game height;
-        let wall = pathWidth; // Width of the walls between paths;    
         let boundW = (pathWidth * width * 2) + (pathWidth * 3);
         let boundH = (pathWidth * height * 2) + (pathWidth * 3);
         this.game.world.setBounds(0, 0, boundW, boundH);
+        this.wall = pathWidth; // Width of the walls between paths;    
         
         var graphics = this.game.add.graphics(0, 0);
     
@@ -640,9 +646,9 @@ class PlayState {
         
         this.mapBoundsTiles = this.game.add.group();
 
-        this._addTilesToGame(wall);
+        //this._addTilesToGame(this.wall);
 
-        let boundingBoxes = MAZE.buildBoundingBoxes(this.mapBounds, wall);
+        let boundingBoxes = MAZE.buildBoundingBoxes(this.mapBounds, this.wall);
         boundingBoxes.forEach(function (bbox) {
             var landItemBound = this.game.add.sprite(bbox.x, bbox.y);
             landItemBound.width = bbox.w;
@@ -793,7 +799,7 @@ class PlayState {
         
     }
 
-    getWallTileFrame(wall, iMapCol, iMapRow, iTileIndexX, iTileIndexY) {
+    getWallTileFrame(iMapCol, iMapRow, iTileIndexX, iTileIndexY) {
         let result = 7; // ToDo: default to center, but how do i know what that is?
 
         let rowTop = false;
@@ -807,13 +813,13 @@ class PlayState {
         //#region determine row position
 
         if (iTileIndexY === 0) {
-            if (typeof this.mapBounds[iMapRow - 1] !== 'undefined' &&
+            if (typeof this.mapBounds[iMapRow - 1] === 'undefined' || 
                 this.mapBounds[iMapRow - 1][iMapCol] === MAZE.MAP_SPACE_FREE) {
                 rowTop = true;
             }
         }
-        else if (iTileIndexY === (wall-32) / 32) {
-            if (typeof this.mapBounds[iMapRow + 1] !== 'undefined' &&
+        else if (iTileIndexY === (this.wall-32) / 32) {
+            if (typeof this.mapBounds[iMapRow + 1] === 'undefined' || 
                 this.mapBounds[iMapRow + 1][iMapCol] === MAZE.MAP_SPACE_FREE) {
                 rowBottom = true;
             }
@@ -827,12 +833,14 @@ class PlayState {
         //#region determine column position
 
         if (iTileIndexX === 0) {
-            if (this.mapBounds[iMapRow][iMapCol - 1] === MAZE.MAP_SPACE_FREE) {
+            if (typeof this.mapBounds[iMapRow][iMapCol - 1] === 'undefined' || 
+                this.mapBounds[iMapRow][iMapCol - 1] === MAZE.MAP_SPACE_FREE) {
                 colLeft = true;
             }
         }
-        else if (iTileIndexX === (wall-32) / 32) {
-            if (this.mapBounds[iMapRow][iMapCol + 1] === MAZE.MAP_SPACE_FREE) {
+        else if (iTileIndexX === (this.wall-32) / 32) {
+            if (typeof this.mapBounds[iMapRow][iMapCol + 1] === 'undefined' || 
+                this.mapBounds[iMapRow][iMapCol + 1] === MAZE.MAP_SPACE_FREE) {
                 colRight = true;
             }
         }
@@ -879,19 +887,51 @@ class PlayState {
                 result = 8;
             }
             else {
-                if (iTileIndexY === 0) {
-                    if (iTileIndexX === 0) {
-                        // top left internal corner:
-                        //result = 1; // 14 is correct but 1 also looks weird!
-                    }
-                    else if (iTileIndexX === (wall-32) / 32) {
-                        // top right internal corner:
-                        //result = 1; // 12 is correct but 1 also looks weird!
-                    }
-                }
-                else if (iTileIndexY === (wall-32) / 32) {
 
+                // If still unassigned, and not the border:
+                if (iMapCol !== 0 && 
+                    iMapRow !== 0 && 
+                    iMapCol !== this.mapBounds[0].length - 1 && 
+                    iMapRow !== this.mapBounds.length - 1) {
+                    // if (iTileIndexY === 0 && 
+                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
+                    //         result = (colLeft) ? 6 : 8;
+                    // }
+                    // else if (iTileIndexY === ((this.wall-32) / 32) && 
+                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
+                    //         result = (colLeft) ? 6 : 8;
+                    // }
                 }
+                else {
+                    // if (iTileIndexY === 0 && 
+                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
+                    //         result = (colLeft) ? 6 : 8;
+                    // }
+                    // else if (iTileIndexY === ((this.wall-32) / 32) && 
+                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
+                    //         result = (colLeft) ? 6 : 8;
+                    // }
+                    
+                    //result = 1;
+                }
+
+                // if (iTileIndexY === 0) {
+                //     if (iTileIndexX === 0) {
+                //         // top left internal corner:
+                //         if (iMapCol !== 0 && iMapRow !== 0) {
+                //             result = 1; // 14 is correct but 1 also looks weird!
+                //         }
+                //     }
+                //     else if (iTileIndexX === (this.wall-32) / 32) {
+                //         // top right internal corner:
+                //         if (iMapCol !== this.mapBounds[0].length - 1) {
+                //             result = 1; // 12 is correct but 1 also looks weird!
+                //         }
+                //     }
+                // }
+                // else if (iTileIndexY === (this.wall-32) / 32) {
+
+                // }
             }
         }
 
@@ -900,31 +940,71 @@ class PlayState {
         return result;
     }
 
-    addWallTiles(wall, iMapCol, iMapRow) {
+    addWallTiles(iMapCol, iMapRow) {
+        let totalTiles = 0;
         // iterate over however large the cell is and draw all the tiles:
-        for (var iTileIndexX = 0; iTileIndexX < (wall / 32); iTileIndexX++) {
-            for (var iTileIndexY = 0; iTileIndexY < (wall / 32); iTileIndexY++) {
+        for (var iTileIndexX = 0; iTileIndexX < (this.wall / 32); iTileIndexX++) {
+            for (var iTileIndexY = 0; iTileIndexY < (this.wall / 32); iTileIndexY++) {
+                totalTiles++;
                 this.mapBoundsTiles.add(this.game.add.image(
-                    (iMapCol * wall) + iTileIndexX * 32, 
-                    (iMapRow * wall) + iTileIndexY * 32, 
+                    (iMapCol * this.wall) + iTileIndexX * 32, 
+                    (iMapRow * this.wall) + iTileIndexY * 32, 
                     'landscape', 
-                    this.getWallTileFrame(wall, 
+                    this.getWallTileFrame( 
                         iMapCol, iMapRow, iTileIndexX, iTileIndexY)));
             }
         }
+        return totalTiles;
     }
 
-    _addTilesToGame(wall) {
+    _addTilesToGame() {
+        this.mapBoundsTiles.callAll('kill');
+        this.mapBoundsTiles.destroy(true, true);
+
+        let totalTilesDrawn = 0;
         // iterate over the map bounds and draw the tiles in each cell:
         for (var iMapCol = 0; iMapCol < this.mapBounds[0].length; iMapCol++) {
             for (var iMapRow = 0; iMapRow < this.mapBounds.length; iMapRow++) {
-                if (this.mapBounds[iMapRow][iMapCol] === MAZE.MAP_SPACE_WALL) {
-                    this.addWallTiles(wall, iMapCol, iMapRow);
+                if (this.mapBounds[iMapRow][iMapCol] === MAZE.MAP_SPACE_WALL &&
+                    this._boxIsInView(iMapCol, iMapRow)) {
+                    totalTilesDrawn += this.addWallTiles(iMapCol, iMapRow);
                 }
             }
         }
+        
+        if (debugLevel === 1) {
+            debugText1 = 
+                "Itration tiles drawn: " + totalTilesDrawn + ";" + "\r\n" + 
+                "Total tiles drawn: " + this.mapBoundsTiles.length + ";" + "\r\n" + 
+                "Camera [x, y] : [" + this.game.camera.x + ", "+ this.game.camera.y + "]" + "\r\n" + 
+                "Camera Dimensions: [" + this.game.camera.width + ", "+ this.game.camera.height + "]";
+        }
+    }
+
+    _boxIsInView(i, j) {
+        let boxX = this.wall * i;
+        let boxY = this.wall * j;
+        let boxW = this.wall;
+        let boxH = this.wall;
+        return this._squaresOverlap(boxX, boxY, boxW, boxH);
+    }
+
+    _squaresOverlap(x, y, w, h) {
+        return !(
+            x   > (this.game.camera.x + this.game.camera.width) || 
+            x+w < (this.game.camera.x) || 
+            y   > (this.game.camera.y + this.game.camera.height) ||
+            y+h < (this.game.camera.y)
+        );
     }
     
+    // _intersectRect(r1, r2) {
+    //     return !(r2.left > r1.right || 
+    //              r2.right < r1.left || 
+    //              r2.top > r1.bottom ||
+    //              r2.bottom < r1.top);
+    //   }
+
     _setLevelDataFromJson(data) {
         let boundW = (data.world.w < this.game.width) ? this.game.width : data.world.w;
         let boundH = (data.world.h < this.game.height) ? this.game.height : data.world.h;
@@ -1206,11 +1286,11 @@ class PlayState {
         //#region Debugging
 
         debugLabel1 = this.game.add.text(32*6, 32*0.2, debugText1, 
-            { font: "18px Courier New", fill: "#000000", align: "center" });
+            { font: "18px Courier New", fill: "#FFFFFF", align: "center" });
         debugLabel2 = this.game.add.text(32*6, 32*0.8, debugTextKeyD, 
-            { font: "18px Courier New", fill: "#000000", align: "center" });
+            { font: "18px Courier New", fill: "#FFFFFF", align: "center" });
         debugLabelFps = this.game.add.text(32*1, 32*1.5, debugTextFps, 
-            { font: "18px Courier New", fill: "#000000", align: "center" });
+            { font: "18px Courier New", fill: "#FFFFFF", align: "center" });
     
         hud.add(debugLabel1);
         hud.add(debugLabel2);
