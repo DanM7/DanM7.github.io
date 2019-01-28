@@ -33,9 +33,14 @@ class PlayState {
         this.keyUpDurationDown = null;
 
         this.mapBounds = null;
+        this.boundingBoxes = null;
 
         this.wall = 0;
+        this.tileWidth = 32;
+
+        this.mapBoundsTiles = null;
     }
+
     unpauseGame(){
         this.game.paused = false;
         if (this.isMobile === true) {
@@ -190,7 +195,8 @@ class PlayState {
         debugLabel2.text = debugTextKeyD;
         debugLabelFps.text = (fps < 40) ? "FPS: " + fps : "";
     
-        this._addTilesToGame();
+        //this._addTilesToGame(this.mapBoundsTiles);
+        this._renderTiles(this.boundingBoxes, this.mapBoundsTiles);
 
         this._handleCollisions();
     
@@ -222,14 +228,14 @@ class PlayState {
         }
         else if (debugLevel === 2) {
             debugText1 = "";
-            this.game.debug.bodyInfo(this.hero, 32*2, 32*2);
+            this.game.debug.bodyInfo(this.hero, this.tileWidth*2, this.tileWidth*2);
         }
         else if (debugLevel === 3) {
-            this.game.debug.cameraInfo(this.game.camera, 32*2, 32*2);
+            this.game.debug.cameraInfo(this.game.camera, this.tileWidth*2, this.tileWidth*2);
         }
         else if (debugLevel === 4) {
-            this.game.debug.inputInfo(32*2, 32*2);
-            //this.game.debug.spriteInputInfo(controlsDPadCircle, 32*2, 32*5);
+            this.game.debug.inputInfo(this.tileWidth*2, this.tileWidth*2);
+            //this.game.debug.spriteInputInfo(controlsDPadCircle, this.tileWidth*2, this.tileWidth*5);
             this.game.debug.pointer(this.game.input.activePointer);
         }
     
@@ -579,27 +585,6 @@ class PlayState {
         }
     }
     
-    // _onHeroVsEnemy(hero, enemy) {
-    //     // the hero can kill enemies when is falling (after a jump, or a fall)
-    //     if (hero.body.velocity.y > 0) {
-    //         enemy.die();
-    //         hero.bounce();
-    //         this.sfx.stomp.play();
-    //     }
-    //     else { // game over -> play dying animation and restart the game
-    //         hero.die();
-    //         this.sfx.stomp.play();
-    //         hero.events.onKilled.addOnce(function () {
-    //             this.game.state.restart(true, false, {level: this.level});
-    //         }, this);
-    
-    //         // NOTE: bug in phaser in which it modifies 'touching' when
-    //         // checking for overlaps. This undoes that change so spiders don't
-    //         // 'bounce' agains the hero
-    //         enemy.body.touching = enemy.body.wasTouching;
-    //     }
-    // }
-    
     _onHeroVsDoor(hero, door) {
         nextLevelIncrement = (typeof door.nextLevelIncrement !== 'undefined') ? door.nextLevelIncrement : 1;
     
@@ -636,20 +621,19 @@ class PlayState {
         this.wall = pathWidth; // Width of the walls between paths;    
         
         var graphics = this.game.add.graphics(0, 0);
-    
-        // set a fill and line style
-        //let randomColor = Math.random() * 0xffffff;
-        let randomColorShade = Math.random() * 0xffffff;//LightenDarkenColor(randomColor, 20);
-        //graphics.beginFill(randomColor);
+        graphics.beginFill(0x171c23); // ToDo: this color should come from JSON based on the tileset.
 
+        // 2D array where values correspond to free-space or wall:
         this.mapBounds = MAZE.buildMap(width, height, true);
         
-        this.mapBoundsTiles = this.game.add.group();
+        // Collection of bounding box rectangles, 
+        // consolidated off the original 2D array maze:  
+        this.boundingBoxes = MAZE.buildBoundingBoxes(this.mapBounds, this.wall);
 
-        //this._addTilesToGame(this.wall);
-
-        let boundingBoxes = MAZE.buildBoundingBoxes(this.mapBounds, this.wall);
-        boundingBoxes.forEach(function (bbox) {
+        //this.mapBoundsTiles = this.game.add.group();
+        this.mapBoundsTiles = this._buildMazeTileGroups(this.boundingBoxes);
+        
+        this.boundingBoxes.forEach(function (bbox) {
             var landItemBound = this.game.add.sprite(bbox.x, bbox.y);
             landItemBound.width = bbox.w;
             landItemBound.height = bbox.h;
@@ -661,11 +645,16 @@ class PlayState {
             landItemBound.grab = false;
             landItemBound.wallJump = true;
             
-            //landItemBound.tint = Math.random() * 0xffffff;
             //this.game.debug.body(landItemBound);
-            //graphics.lineStyle(4, randomColorShade, 1);
+            //landItemBound.tint = Math.random() * 0xffffff;
+            landItemBound.tint = 0x171c23;
+            graphics.lineStyle(4, 0x171c23, 1);
             //graphics.drawRect(bbox.x, bbox.y, bbox.w, bbox.h);
-    
+            graphics.drawRect(
+                bbox.x + this.tileWidth, 
+                bbox.y + this.tileWidth, 
+                bbox.w - (2*this.tileWidth), 
+                bbox.h - 64);            
             this.landscapeBounds.add(landItemBound);
         }, this);
     
@@ -746,8 +735,8 @@ class PlayState {
             (data.hero.pos && data.hero.pos === "fixed") ||
             (data.hero.x || data.hero.y || data.hero.x32 || data.hero.y32)
         ) {
-            initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * 32 : data.hero.x);
-            initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * 32 : data.hero.y);
+            initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * this.tileWidth : data.hero.x);
+            initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * this.tileWidth : data.hero.y);
         }
         else if (data.hero.pos && data.hero.pos === "random") {
             let requireBorderUnderneath = [ { "x": 0, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL } ];
@@ -799,8 +788,82 @@ class PlayState {
         
     }
 
+    _buildMazeTileGroups(boundingBoxes) {
+        let mazeTileGroups = [];
+        boundingBoxes.forEach(function (bbox) {
+            let bboxGroup = this.game.add.group();
+            for (var bX = 0; bX < bbox.w; bX += this.tileWidth) {
+                for (var bY = 0; bY < bbox.h; bY += this.tileWidth) {
+                    let tileFrame = this.getMazeTileFrame( 
+                        bX, bY, bbox);
+                    if (tileFrame !== null) {
+                        bboxGroup.add(
+                            this.game.add.image(
+                                bbox.x + bX, 
+                                bbox.y + bY,
+                                'landscape', 
+                                tileFrame
+                            )
+                        );
+                    }
+                }   
+            }
+            bboxGroup.callAll('kill');
+            mazeTileGroups[bbox.id] = bboxGroup;
+        }, this);
+        return mazeTileGroups;
+    }
+
+    getMazeTileFrame(bX, bY, bbox) {
+        let tileFrame = null;
+        
+        // ToDo: how do i not hardcode these frame indexes?
+        // 012 345
+        // 678 9AB
+        // CDE FGH
+        
+        if (bX === 0) {
+            // Left column:
+            if (bY === 0) {
+                tileFrame = 0
+            }
+            else if (bY === bbox.h - 32) {
+                tileFrame = 12;
+            }
+            else {
+                tileFrame = 6;
+            }
+        }
+        else if (bX === bbox.w - 32) {
+            // Right column:
+            if (bY === 0) {
+                tileFrame = 2
+            }
+            else if (bY === bbox.w - 32) {
+                tileFrame = 14;
+            }
+            else {
+                tileFrame = 8;
+            }
+        }
+        else if (bY === 0) {
+            // Top row:
+            tileFrame = 1;
+        }
+        else if (bY === bbox.h - 32) {
+            // Top row:
+            tileFrame = 13;
+        }
+        else {
+            tileFrame = 7;
+        }
+        return tileFrame;
+    }
+
     getWallTileFrame(iMapCol, iMapRow, iTileIndexX, iTileIndexY) {
-        let result = 7; // ToDo: default to center, but how do i know what that is?
+        // ToDo: default to center on desktop and null on mobile.
+        // This will reduce sprites on mobile and improve render speed.
+        let result = null;
 
         let rowTop = false;
         let rowMiddle = false;
@@ -817,11 +880,17 @@ class PlayState {
                 this.mapBounds[iMapRow - 1][iMapCol] === MAZE.MAP_SPACE_FREE) {
                 rowTop = true;
             }
+            else {
+                //rowTop = true;
+            }
         }
-        else if (iTileIndexY === (this.wall-32) / 32) {
+        else if (iTileIndexY === (this.wall-this.tileWidth) / this.tileWidth) {
             if (typeof this.mapBounds[iMapRow + 1] === 'undefined' || 
                 this.mapBounds[iMapRow + 1][iMapCol] === MAZE.MAP_SPACE_FREE) {
                 rowBottom = true;
+            }
+            else {
+                //rowBottom = true;
             }
         }
         else {
@@ -837,11 +906,17 @@ class PlayState {
                 this.mapBounds[iMapRow][iMapCol - 1] === MAZE.MAP_SPACE_FREE) {
                 colLeft = true;
             }
+            else {
+                //colLeft = true;
+            }
         }
-        else if (iTileIndexX === (this.wall-32) / 32) {
+        else if (iTileIndexX === (this.wall-this.tileWidth) / this.tileWidth) {
             if (typeof this.mapBounds[iMapRow][iMapCol + 1] === 'undefined' || 
                 this.mapBounds[iMapRow][iMapCol + 1] === MAZE.MAP_SPACE_FREE) {
                 colRight = true;
+            }
+            else {
+                //colRight = true;
             }
         }
         else {
@@ -887,51 +962,7 @@ class PlayState {
                 result = 8;
             }
             else {
-
-                // If still unassigned, and not the border:
-                if (iMapCol !== 0 && 
-                    iMapRow !== 0 && 
-                    iMapCol !== this.mapBounds[0].length - 1 && 
-                    iMapRow !== this.mapBounds.length - 1) {
-                    // if (iTileIndexY === 0 && 
-                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
-                    //         result = (colLeft) ? 6 : 8;
-                    // }
-                    // else if (iTileIndexY === ((this.wall-32) / 32) && 
-                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
-                    //         result = (colLeft) ? 6 : 8;
-                    // }
-                }
-                else {
-                    // if (iTileIndexY === 0 && 
-                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
-                    //         result = (colLeft) ? 6 : 8;
-                    // }
-                    // else if (iTileIndexY === ((this.wall-32) / 32) && 
-                    //     (iTileIndexX === 0 || iTileIndexX === (this.wall-32) / 32)) {
-                    //         result = (colLeft) ? 6 : 8;
-                    // }
-                    
-                    //result = 1;
-                }
-
-                // if (iTileIndexY === 0) {
-                //     if (iTileIndexX === 0) {
-                //         // top left internal corner:
-                //         if (iMapCol !== 0 && iMapRow !== 0) {
-                //             result = 1; // 14 is correct but 1 also looks weird!
-                //         }
-                //     }
-                //     else if (iTileIndexX === (this.wall-32) / 32) {
-                //         // top right internal corner:
-                //         if (iMapCol !== this.mapBounds[0].length - 1) {
-                //             result = 1; // 12 is correct but 1 also looks weird!
-                //         }
-                //     }
-                // }
-                // else if (iTileIndexY === (this.wall-32) / 32) {
-
-                // }
+                //result = 7;
             }
         }
 
@@ -940,26 +971,56 @@ class PlayState {
         return result;
     }
 
-    addWallTiles(iMapCol, iMapRow) {
-        let totalTiles = 0;
-        // iterate over however large the cell is and draw all the tiles:
-        for (var iTileIndexX = 0; iTileIndexX < (this.wall / 32); iTileIndexX++) {
-            for (var iTileIndexY = 0; iTileIndexY < (this.wall / 32); iTileIndexY++) {
-                totalTiles++;
-                this.mapBoundsTiles.add(this.game.add.image(
-                    (iMapCol * this.wall) + iTileIndexX * 32, 
-                    (iMapRow * this.wall) + iTileIndexY * 32, 
-                    'landscape', 
-                    this.getWallTileFrame( 
-                        iMapCol, iMapRow, iTileIndexX, iTileIndexY)));
+    // this.boundingBoxes, this.mapBoundsTiles
+    _renderTiles(allBoxes, groupsToRender) {
+        let totalTilesDrawn = 0;
+
+        allBoxes.forEach(function (boundingBox) {
+            let tileGroup = groupsToRender[boundingBox.id];
+            if (this._squareIsInView(
+                boundingBox.x,
+                boundingBox.y,
+                boundingBox.w,
+                boundingBox.h
+            )) {
+                // this.mapBoundsTiles.add(
+                //     this.game.add.image(
+                //         (iMapCol * this.wall) + iTileIndexX * this.tileWidth, 
+                //         (iMapRow * this.wall) + iTileIndexY * this.tileWidth, 
+                //         'landscape', 
+                //         tileFrame
+                //     )
+                // // );
+
+                // tileGroup.forEach(function (tile) {
+                //     tile.draw();
+                // }, this);
+                
+                tileGroup.callAll('revive');
             }
+            else {
+                tileGroup.callAll('kill');
+            }
+        }, this);
+        
+        if (debugLevel === 1) {
+            debugText1 = 
+                "Itration tiles drawn: " + totalTilesDrawn + ";" + "\r\n" + 
+                //"Total tiles drawn: " + this.mapBoundsTiles.length + ";" + "\r\n" + 
+                "Camera [x, y] : [" + this.game.camera.x + ", "+ this.game.camera.y + "]" + "\r\n" + 
+                "Camera Dimensions: [" + this.game.camera.width + ", "+ this.game.camera.height + "]";
         }
-        return totalTiles;
     }
 
-    _addTilesToGame() {
-        this.mapBoundsTiles.callAll('kill');
-        this.mapBoundsTiles.destroy(true, true);
+    _addTilesToGame(tileGroup) {
+        if (typeof tileGroup === 'undefined' || 
+            tileGroup === null || 
+            tileGroup.length === 0
+            ) {
+            return;
+        }
+        tileGroup.callAll('kill');
+        tileGroup.destroy(true, true);
 
         let totalTilesDrawn = 0;
         // iterate over the map bounds and draw the tiles in each cell:
@@ -971,25 +1032,32 @@ class PlayState {
                 }
             }
         }
-        
-        if (debugLevel === 1) {
-            debugText1 = 
-                "Itration tiles drawn: " + totalTilesDrawn + ";" + "\r\n" + 
-                "Total tiles drawn: " + this.mapBoundsTiles.length + ";" + "\r\n" + 
-                "Camera [x, y] : [" + this.game.camera.x + ", "+ this.game.camera.y + "]" + "\r\n" + 
-                "Camera Dimensions: [" + this.game.camera.width + ", "+ this.game.camera.height + "]";
+    }
+
+    addWallTiles(iMapCol, iMapRow) {
+        let totalTiles = 0;
+        // iterate over however large the cell is and draw all the tiles:
+        for (var iTileIndexX = 0; iTileIndexX < (this.wall / this.tileWidth); iTileIndexX++) {
+            for (var iTileIndexY = 0; iTileIndexY < (this.wall / this.tileWidth); iTileIndexY++) {
+                let tileFrame = this.getWallTileFrame( 
+                    iMapCol, iMapRow, iTileIndexX, iTileIndexY);
+                if (tileFrame !== null) {
+                    totalTiles++;
+                    this.mapBoundsTiles.add(
+                        this.game.add.image(
+                            (iMapCol * this.wall) + iTileIndexX * this.tileWidth, 
+                            (iMapRow * this.wall) + iTileIndexY * this.tileWidth, 
+                            'landscape', 
+                            tileFrame
+                        )
+                    );
+                }
+            }
         }
+        return totalTiles;
     }
 
-    _boxIsInView(i, j) {
-        let boxX = this.wall * i;
-        let boxY = this.wall * j;
-        let boxW = this.wall;
-        let boxH = this.wall;
-        return this._squaresOverlap(boxX, boxY, boxW, boxH);
-    }
-
-    _squaresOverlap(x, y, w, h) {
+    _squareIsInView(x, y, w, h) {
         return !(
             x   > (this.game.camera.x + this.game.camera.width) || 
             x+w < (this.game.camera.x) || 
@@ -998,13 +1066,6 @@ class PlayState {
         );
     }
     
-    // _intersectRect(r1, r2) {
-    //     return !(r2.left > r1.right || 
-    //              r2.right < r1.left || 
-    //              r2.top > r1.bottom ||
-    //              r2.bottom < r1.top);
-    //   }
-
     _setLevelDataFromJson(data) {
         let boundW = (data.world.w < this.game.width) ? this.game.width : data.world.w;
         let boundH = (data.world.h < this.game.height) ? this.game.height : data.world.h;
@@ -1014,14 +1075,14 @@ class PlayState {
         data.landscape.forEach(function (land) {
             var rXTotal = (land.repeatX || 0);
             var rYTotal = (land.repeatY || 0);
-            var landX = (land.x32>=0) ? land.x32*32 : land.x;
-            var landY = (land.y32>=0) ? land.y32*32 : land.y;
-            var landWidth = (land.w32>=0) ? land.w32*32 : 32;
-            var landHeight = (land.h32>=0) ? land.h32*32 : 32;
+            var landX = (land.x32>=0) ? land.x32*this.tileWidth : land.x;
+            var landY = (land.y32>=0) ? land.y32*this.tileWidth : land.y;
+            var landWidth = (land.w32>=0) ? land.w32*this.tileWidth : this.tileWidth;
+            var landHeight = (land.h32>=0) ? land.h32*this.tileWidth : this.tileWidth;
     
             var landItemBound = this.game.add.sprite(landX, landY);
-            landItemBound.width = landWidth + 32*rXTotal;
-            landItemBound.height = landHeight + 32*rYTotal;
+            landItemBound.width = landWidth + this.tileWidth*rXTotal;
+            landItemBound.height = landHeight + this.tileWidth*rYTotal;
             this.game.physics.enable(landItemBound);
             landItemBound.body.allowGravity = false;
             landItemBound.body.immovable = true;
@@ -1056,8 +1117,8 @@ class PlayState {
         this._spawnDoor(data.door.x, data.door.y);
     
         // spawn hero
-        let initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * 32 : data.hero.x);
-        let initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * 32 : data.hero.y);
+        let initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * this.tileWidth : data.hero.x);
+        let initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * this.tileWidth : data.hero.y);
         this.hero = new Hero2(this.game, initialHeroX, initialHeroY);
         this.game.add.existing(this.hero);
     }
@@ -1285,11 +1346,11 @@ class PlayState {
         }
         //#region Debugging
 
-        debugLabel1 = this.game.add.text(32*6, 32*0.2, debugText1, 
+        debugLabel1 = this.game.add.text(this.tileWidth*6, this.tileWidth*0.2, debugText1, 
             { font: "18px Courier New", fill: "#FFFFFF", align: "center" });
-        debugLabel2 = this.game.add.text(32*6, 32*0.8, debugTextKeyD, 
+        debugLabel2 = this.game.add.text(this.tileWidth*6, this.tileWidth*0.8, debugTextKeyD, 
             { font: "18px Courier New", fill: "#FFFFFF", align: "center" });
-        debugLabelFps = this.game.add.text(32*1, 32*1.5, debugTextFps, 
+        debugLabelFps = this.game.add.text(this.tileWidth*1, this.tileWidth*1.5, debugTextFps, 
             { font: "18px Courier New", fill: "#FFFFFF", align: "center" });
     
         hud.add(debugLabel1);
