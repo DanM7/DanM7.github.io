@@ -19,11 +19,12 @@ var MAZE = (function () {
         configurable: true
     });
 
-    function _boundingBox(x, y, w, h) {
+    function _boundingBox(x, y, w, h, id) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
+        this.id = id;
     }
 
     _randomGen = function(seed){
@@ -128,82 +129,13 @@ var MAZE = (function () {
         return my.map;
     }
 
-    my.buildBoundingBoxesNew = function (mapBounds, wall, pathWidth) {
-        let boundingBoxes = [];
-        let width = mapBounds[0].length / 2;
-        let height = mapBounds.length / 2;
-
-        for (var iMapCol = 0; iMapCol < width*2 - 1; iMapCol++) {
-            for (var iMapRow = 0; iMapRow < height*2 - 1; iMapRow++) {
-
-                //if 
-
-            }
-        }
-
-        // Consolidate columns:
-        for (var iMapCol = 0; iMapCol < width*2 - 1; iMapCol++) {
-            for (var iMapRow1 = 0; iMapRow1 < height*2; iMapRow1++) {
-                if (mapBounds[iMapRow1][iMapCol] === MAZE.MAP_SPACE_WALL) {
-                    for (var iMapRow2 = iMapRow1; iMapRow2 < height*2; iMapRow2++) {
-                        if (mapBounds[iMapRow2][iMapCol] === MAZE.MAP_SPACE_FREE) {
-                            if (iMapRow2 != iMapRow1 + 1) {
-                                boundingBoxes.push(
-                                    new _boundingBox(
-                                        (wall * (iMapCol + 1)),
-                                        ((iMapRow1 + 1) * wall),
-                                        wall,
-                                        ((iMapRow2 - iMapRow1) * wall)
-                                    )
-                                );
-                            }
-                            iMapRow1 = iMapRow2;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Consolidate rows:
-        for (var iMapRow = 0; iMapRow < height*2 - 1; iMapRow++) {
-            for (var iMapCol1 = 0; iMapCol1 < width*2 - 1; iMapCol1++) {
-                if (
-                    mapBounds[iMapRow][iMapCol1] === MAZE.MAP_SPACE_WALL 
-                    && 
-                    (!mapBounds[iMapRow - 1] || (mapBounds[iMapRow - 1][iMapCol1] === MAZE.MAP_SPACE_FREE)) 
-                    && 
-                    (!mapBounds[iMapRow + 1] || (mapBounds[iMapRow + 1][iMapCol1] === MAZE.MAP_SPACE_FREE))
-                ) {
-                    for (var iMapCol2 = iMapCol1; iMapCol2 < width*2; iMapCol2++) {
-                        if ((mapBounds[iMapRow - 1] && mapBounds[iMapRow - 1][iMapCol2] === MAZE.MAP_SPACE_WALL) || 
-                            (mapBounds[iMapRow + 1] && mapBounds[iMapRow + 1][iMapCol2] === MAZE.MAP_SPACE_WALL) ||
-                            (mapBounds[iMapRow][iMapCol2] === MAZE.MAP_SPACE_FREE)
-                        ) {
-                            boundingBoxes.push(
-                                new _boundingBox(
-                                    ((iMapCol1 + 1)* wall),
-                                    ((iMapRow + 1) * wall),
-                                    ((iMapCol2 - iMapCol1) * wall),
-                                    wall
-                                )
-                            );
-                            iMapCol1 = iMapCol2;
-                            break;
-                        }	
-                    }
-                }
-            }
-        }
-
-        return boundingBoxes;
-    }
-
     my.buildBoundingBoxes = function (mapBounds, wall) {
         let boundWidth = mapBounds[0].length;
         let boundHeight = mapBounds.length;
         let boundingBoxes = [];
         
+        let boxId = 0;
+
         // Consolidate columns:
         for (var iMapCol = 0; iMapCol < boundWidth; iMapCol++) {
             for (var iMapRow1 = 0; iMapRow1 < boundHeight; iMapRow1++) {
@@ -216,9 +148,11 @@ var MAZE = (function () {
                                         (wall * (iMapCol)),
                                         ((iMapRow1) * wall),
                                         wall,
-                                        ((iMapRow2 - iMapRow1) * wall)
+                                        ((iMapRow2 - iMapRow1) * wall),
+                                        boxId
                                     )
                                 );
+                                boxId++;
                             }
                             iMapRow1 = iMapRow2;
                             break;
@@ -248,9 +182,11 @@ var MAZE = (function () {
                                     ((iMapCol1) * wall),
                                     ((iMapRow) * wall),
                                     ((iMapCol2 - iMapCol1) * wall),
-                                    wall
+                                    wall,
+                                    boxId
                                 )
                             );
+                            boxId++;
                             iMapCol1 = iMapCol2;
                             break;
                         }	
