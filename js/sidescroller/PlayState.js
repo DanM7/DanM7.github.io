@@ -855,7 +855,7 @@ class PlayState {
             tileFrame = 13;
         }
         else {
-            tileFrame = 7;
+            //tileFrame = 7;
         }
         return tileFrame;
     }
