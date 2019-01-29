@@ -975,31 +975,30 @@ class PlayState {
     _renderTiles(allBoxes, groupsToRender) {
         let totalTilesDrawn = 0;
 
-        allBoxes.forEach(function (boundingBox) {
-            let tileGroup = groupsToRender[boundingBox.id];
-            if (this._squareIsInView(
-                boundingBox.x,
-                boundingBox.y,
-                boundingBox.w,
-                boundingBox.h
-            )) {
-                // this.mapBoundsTiles.add(
-                //     this.game.add.image(
-                //         (iMapCol * this.wall) + iTileIndexX * this.tileWidth, 
-                //         (iMapRow * this.wall) + iTileIndexY * this.tileWidth, 
-                //         'landscape', 
-                //         tileFrame
-                //     )
-                // // );
+        allBoxes.forEach(function (b) {
+            let tileGroup = groupsToRender[b.id];
 
-                // tileGroup.forEach(function (tile) {
-                //     tile.draw();
-                // }, this);
-                
-                tileGroup.callAll('revive');
+            if (b.wasInView === true) {
+                // last update it was in view...
+                if (this._squareIsInView(b.x, b.y, b.w, b.h)) {
+                    // ...and it's still in view, so do nothing.
+                }
+                else {
+                    // ...but now it's not, so kill the group:
+                    tileGroup.callAll('kill');
+                    b.wasInView = false;
+                }
             }
-            else {
-                tileGroup.callAll('kill');
+            else if (b.wasInView === false) {
+                // last update it was not in view...
+                if (this._squareIsInView(b.x, b.y, b.w, b.h)) {
+                    // ...but now it is, so revive the group:
+                    b.wasInView = true;
+                    tileGroup.callAll('revive');
+                }
+                else {
+                    // ...and it's still not, so do nothing.
+                }
             }
         }, this);
         
