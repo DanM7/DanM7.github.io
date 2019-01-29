@@ -25,6 +25,7 @@ var MAZE = (function () {
         this.w = w;
         this.h = h;
         this.id = id;
+        this.wasInView = false
     }
 
     _randomGen = function(seed){
