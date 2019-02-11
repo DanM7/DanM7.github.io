@@ -98,13 +98,17 @@ LoadingState.preload = function () {
     this.game.load.image('background', 'images/backgrounds/lava_temple.png');
     this.game.load.image('invisible-wall', 'images/invisible_wall.png');
 
-    this.game.load.spritesheet('landscape', 'images/backgrounds/landscape_tileset_32_001.png', 32, 32, (192/32)*(128/32)); //, (1408/32)*(384/32)
+    this.game.load.spritesheet('landscape', 'images/backgrounds/landscape_tileset_32_001.png', 
+        32, 32, (192/32)*(128/32)); //, (1408/32)*(384/32)
 
     this.game.load.image('key', 'images/key.png');
 
     const HERO_DEFAULT_SPRIE_WIDTH = 100;
-    const HERO_DEFAULT_SPRITE_HEIGHT = 73;
-    this.game.load.spritesheet('hero', 'images/bowen/bowen_adventurer_transparent.png', HERO_DEFAULT_SPRIE_WIDTH, HERO_DEFAULT_SPRITE_HEIGHT, 95);
+    const HERO_DEFAULT_SPRITE_HEIGHT = 72;
+    //this.game.load.spritesheet(name, source, w, h)
+    this.game.load.spritesheet('hero', 'images/bowen/adventurer-1.3.2-transparent.png', 
+        HERO_DEFAULT_SPRIE_WIDTH, HERO_DEFAULT_SPRITE_HEIGHT, 104);
+        
     this.game.load.spritesheet('coin', 'images/coin_animated.png', 22, 22);
     this.game.load.spritesheet('spider', 'images/spider.png', 42, 32);
     this.game.load.spritesheet('door', 'images/door.png', 42, 66);
