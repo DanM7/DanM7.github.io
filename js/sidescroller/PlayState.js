@@ -1,11 +1,12 @@
 
 var touchButtonA;
+var touchButtonB;
 var buttonUp;
 var buttonDown;
 var buttonLeft;
 var buttonRight;
 
-let keyPressToggleD = true;
+let keyPressToggleDebug = true;
 
 let debugLevel = 0;
 let maxDebugLevel = 4; // 0=none;1=keys;2=bodies;3=camera;4=touch;
@@ -45,6 +46,7 @@ class PlayState {
         this.game.paused = false;
         if (this.isMobile === true) {
             touchButtonA.alpha = controlsAlpha;
+            touchButtonB.alpha = controlsAlpha;
             buttonLeft.alpha = controlsAlpha;
             buttonRight.alpha = controlsAlpha;
         }
@@ -59,8 +61,13 @@ class PlayState {
             right: Phaser.KeyCode.RIGHT,
             up: Phaser.KeyCode.UP,
             down: Phaser.KeyCode.DOWN,
+            A: Phaser.KeyCode.A,
+            B: Phaser.KeyCode.B,
             D: Phaser.KeyCode.D,
-            B: Phaser.KeyCode.B
+            F: Phaser.KeyCode.F,
+            S: Phaser.KeyCode.S,
+            T: Phaser.KeyCode.T,
+            W: Phaser.KeyCode.W
         });
     
         this.coinPickupCount = 0;
@@ -85,6 +92,14 @@ class PlayState {
         this.keys.up.isDown = false;
         this.keyUpDurationDown = null;
     }
+    touchButtonBPress (thisButton) {
+        thisButton.alpha = controlsAlphaDown;
+        this.keys.F.isDown = true;
+    }
+    touchButtonBRelease (thisButton) {
+        thisButton.alpha = controlsAlpha;
+        this.keys.F.isDown = false;
+    }
     touchButtonSettingsPress(thisButton) {
         //thisButton.alpha = controlsAlphaDown;
         //controlsSettings
@@ -93,6 +108,7 @@ class PlayState {
     
         // Hide the existing A button and draw a temp one:
         touchButtonA.alpha = 0;
+        touchButtonB.alpha = 0;
         buttonLeft.alpha = 0;
         buttonRight.alpha = 0;
         
@@ -360,10 +376,19 @@ class PlayState {
             xDir = 0;
         }
         this.hero.move(xDir);
+
+        if (this.keys.F.isDown) {
+            if (this.hero.swordAttackSequence === -2) {
+                this.hero.swordAttackSequence = -1;
+            }
+            else {
+                this.hero.swordAttackSequence = 1;
+            }
+        }
         
-        if (this.keys.D.isDown) {
-            if (keyPressToggleD) {
-                keyPressToggleD = false;
+        if (this.keys.T.isDown) {
+            if (keyPressToggleDebug) {
+                keyPressToggleDebug = false;
                 
                 if (debugLevel === maxDebugLevel) {
                     debugLevel = 0;
@@ -374,12 +399,10 @@ class PlayState {
                     //debugTextKeyD = "Keys: Up=n; Down=n; Left=n; Right=n; D=n; Debug=" + (debugLevel>0 ? "y" : "n") + ";"
                     //debugTextKeyD = debugTextKeyD.replace(" Debug=n;", " Debug=y;");
                 }
-                debugTextKeyD = debugTextKeyD.replace(" D=n;", " D=y;");
             }
         }
         else {
-            debugTextKeyD = debugTextKeyD.replace(" D=y;", " D=n;");
-            keyPressToggleD = true;
+            keyPressToggleDebug = true;
         }
     
         // handle jump
@@ -770,14 +793,18 @@ class PlayState {
             new animationData('animationHeroIdle', [0, 0, 0, 0, 0, 1, 2, 3, 0, 0, 0, 0], 4, true),
             new animationData('animationHeroCrouch', [4, 4, 4, 4, 4, 5, 6, 7, 4, 4, 4, 4], 4, true),
             new animationData('animationHeroRun', [8, 9, 10, 11, 12, 13], 8, true),
+            new animationData('animationHeroRunSword', [96, 97, 98, 99, 100, 101], 8, true),
             new animationData('animationHeroSliding', [24, 25, 26, 27], 8, false), // ToDo: add 28 is initial in-between;
             new animationData('animationHeroLedgeGrab', [29, 30, 31, 30], 2, true),
             new animationData('animationHeroLedgePullup', [33, 34, 35, 36, 37], 8, false),
-            new animationData('animationHeroSwordDraw', [69, 70, 71, 72, 73], 8, false),
             new animationData('animationHeroWallJumpPause', [79, 80], 4, true),
             new animationData('animationHeroJump', [14, 15, 16, 17], 12, false),// ToDo: loop last few frames of these 2 and split them so they're the initial action then the loop.
             new animationData('animationHeroJumpExtra', [18, 19, 20, 21], 12, true),
             new animationData('animationHeroFall', [17, 22, 23], 8, false),
+            new animationData('animationHeroSwordDraw', [70, 71, 72, 38], 8, false),
+            new animationData('animationHeroSwordIdle', [38, 38, 38, 38, 38, 39, 40, 41, 38, 38, 38, 38], 4, true),
+            new animationData('animationHeroSwordAttack1', [53,54,55,56,57,58], 8, false),
+            new animationData('animationHeroSwordAttack2', [53,54,55,56,57,58], 8, false),
             new animationData('die', [5, 6, 5, 6, 5, 6, 5, 6], 12)
         ];
         hero2.addAnimations(heroAnimations);
@@ -808,7 +835,10 @@ class PlayState {
                     }
                 }   
             }
+
+            // Default to killed. We will revive when needed.
             bboxGroup.callAll('kill');
+
             mazeTileGroups[bbox.id] = bboxGroup;
         }, this);
         return mazeTileGroups;
@@ -818,44 +848,57 @@ class PlayState {
         let tileFrame = null;
         
         // ToDo: how do i not hardcode these frame indexes?
-        // 012 345
-        // 678 9AB
-        // CDE FGH
+        // 012 345      0   1   2
+        // 678 9AB      6   7   8
+        // CDE FGH      12  13  14
         
         if (bX === 0) {
             // Left column:
+
             if (bY === 0) {
+                // Top row:
                 tileFrame = 0
             }
-            else if (bY === bbox.h - 32) {
+            else if (bY === bbox.h - this.tileWidth) {
+                // Bottom row:
                 tileFrame = 12;
             }
             else {
+                // Middle rows:
                 tileFrame = 6;
             }
         }
-        else if (bX === bbox.w - 32) {
+        else if (bX === bbox.w - this.tileWidth) {
             // Right column:
+
             if (bY === 0) {
+                // Top row:
                 tileFrame = 2
             }
-            else if (bY === bbox.w - 32) {
+            else if (bY === bbox.h - this.tileWidth) {
+                // Bottom row:
                 tileFrame = 14;
             }
             else {
+                // Middle rows:
                 tileFrame = 8;
             }
         }
-        else if (bY === 0) {
-            // Top row:
-            tileFrame = 1;
-        }
-        else if (bY === bbox.h - 32) {
-            // Top row:
-            tileFrame = 13;
-        }
         else {
-            //tileFrame = 7;
+            // Middle columns:
+
+            if (bY === 0) {
+                // Top row:
+                tileFrame = 1;
+            }
+            else if (bY === bbox.h - this.tileWidth) {
+                // Bottom row:
+                tileFrame = 13;
+            }
+            else {
+                // ToDo: only draw middle tiles if we're on desktop.
+                //tileFrame = 7;
+            }
         }
         return tileFrame;
     }
@@ -1307,6 +1350,17 @@ class PlayState {
             touchButtonA.events.onInputUp.add(this.touchButtonARelease, this);
             touchButtonA.events.onInputOut.add(this.touchButtonARelease, this);
 
+            touchButtonB = this.game.add.sprite(
+                touchButtonA.x - touchButtonA.width - 2 * buttonScale,//this.game.width - (60 + 60 * buttonScale), // x + 2y = 180; x + 1y = 120;     x + 2y = x + 1y + 60
+                touchButtonA.y,//this.game.height - (60 + 60 * buttonScale),
+                'touchButtonB'
+            );
+            touchButtonB.scale.setTo(buttonScale, buttonScale);
+            touchButtonB.events.onInputDown.add(this.touchButtonBPress, this);
+            touchButtonB.events.onInputOver.add(this.touchButtonBPress, this);
+            touchButtonB.events.onInputUp.add(this.touchButtonBRelease, this);
+            touchButtonB.events.onInputOut.add(this.touchButtonBRelease, this);
+
             //#endregion Bottom Right
 
             //#region Top Right
@@ -1330,6 +1384,7 @@ class PlayState {
 
             let controlButtons = [
                 touchButtonA,
+                touchButtonB,
                 //touchButtonFullScreen,
                 touchButtonSettings,
                 buttonUp,

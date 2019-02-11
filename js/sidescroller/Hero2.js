@@ -4,6 +4,7 @@ const ANIMATION_HERO_IDLE = 'animationHeroIdle';
 const ANIMATION_HERO_SLIDING = 'animationHeroSliding';
 const ANIMATION_HERO_CROUCH = 'animationHeroCrouch';
 const ANIMATION_HERO_RUN = 'animationHeroRun';
+const ANIMATION_HERO_RUN_SWORD = 'animationHeroRunSword';
 const ANIMATION_HERO_JUMP = 'animationHeroJump';
 const ANIMATION_HERO_JUMP_EXTRA = 'animationHeroJumpExtra';
 const ANIMATION_HERO_WALL_JUMP_PAUSE = 'animationHeroWallJumpPause';
@@ -11,14 +12,18 @@ const ANIMATION_HERO_FALL = "animationHeroFall"
 const ANIMATION_HERO_LEDGE_GRAB = 'animationHeroLedgeGrab';
 const ANIMATION_HERO_LEDGE_PULLUP = 'animationHeroLedgePullup';
 const ANIMATION_HERO_SWORD_DRAW = 'animationHeroSwordDraw';
-const ANIMATION_HERO_SWORD_ATTACK_BASIC = 'animationHeroSwordAttackBasic';
-var heroAnimationDimensions = {}; // Note: offsetY needs to be the sprite's default height (ex. 73) - h!
-heroAnimationDimensions[ANIMATION_HERO_SLIDING] = { "w": 40, "h": 30, "offsetX": 35, "offsetY": 43.5 };
+const ANIMATION_HERO_SWORD_IDLE = 'animationHeroSwordIdle';
+const ANIMATION_HERO_SWORD_ATTACK_1 = 'animationHeroSwordAttack1';
+
+// Note: offsetY needs to be the sprite's default height 
+// (ex. 72) - h! Like 30 & 42 or 72 & 0.
+var heroAnimationDimensions = {}; 
+heroAnimationDimensions[ANIMATION_HERO_SLIDING] = { "w": 40, "h": 30, "offsetX": 35, "offsetY": 42 };
 
 const HERO_DEFAULT_SIZE_WIDTH = 40;
-const HERO_DEFAULT_SIZE_HEIGHT = 60;
+const HERO_DEFAULT_SIZE_HEIGHT = 72;
 const HERO_DEFAULT_SIZE_OFFSET_X = 32;
-const HERO_DEFAULT_SIZE_OFFSET_Y = 13;
+const HERO_DEFAULT_SIZE_OFFSET_Y = 0;
 
 //#endregion constants
 
@@ -63,6 +68,7 @@ class Hero2 extends Phaser.Sprite {
         this.isWallJumpPauseL = false;
         this.isWallJumpPauseLDuration = 0;
         this.wallJumpPauseLHeight = 0;
+        this.swordAttackSequence = -2;
 
         // Make starting animation separate funcion:
         this.animations.play('animationHeroIdle');
@@ -145,9 +151,17 @@ class Hero2 extends Phaser.Sprite {
     }
     update() {
         // update sprite animation, if it needs changing
-        let animationName = this._getAnimationName();
+        let nextAnimation = this._getAnimationNameAndCallback();
+        let animationName = nextAnimation.AnimationName;
         if (this.animations.name !== animationName) {
             this.animations.play(animationName);
+            if (nextAnimation.OnComplete !== null) {
+                this.animations.currentAnim.onComplete.add(
+                    function () {
+                        this[nextAnimation.OnComplete]();
+                    }, this
+                );
+            }
             if (animationName in heroAnimationDimensions) {
                 let nonStandard = heroAnimationDimensions[animationName];
                 this.body.setSize(
@@ -166,9 +180,10 @@ class Hero2 extends Phaser.Sprite {
             }
         }
     }
-    _getAnimationName() {
+    _getAnimationNameAndCallback() {
         let name = ANIMATION_HERO_IDLE; // default animation
-    
+        let func = null;
+
         let deltaX = this.body.position.x - this.body.prev.x;
     
         // dying
@@ -200,7 +215,9 @@ class Hero2 extends Phaser.Sprite {
             name = ANIMATION_HERO_JUMP_EXTRA;
         }
         else if (deltaX != 0 && this.touchingDownCount > 0 && !this.isSliding) {
-            name = ANIMATION_HERO_RUN;
+            name = (this.swordAttackSequence >= 0) ? 
+                ANIMATION_HERO_RUN_SWORD :
+                ANIMATION_HERO_RUN;
         }
         else if (this.isCrouching) {
             name = ANIMATION_HERO_CROUCH;
@@ -208,9 +225,28 @@ class Hero2 extends Phaser.Sprite {
         else if (this.isSliding) {
             name = ANIMATION_HERO_SLIDING;
         }
+        else if (this.swordAttackSequence === -1) {
+            name = ANIMATION_HERO_SWORD_DRAW;
+            func = "_heroSwordDrawComplete";
+        }
+        else if (this.swordAttackSequence === 0) {
+            name = ANIMATION_HERO_SWORD_IDLE;
+        }
+        else if (this.swordAttackSequence === 1) {
+            name = ANIMATION_HERO_SWORD_ATTACK_1;
+            func = "_heroSwordDrawComplete";
+        }
     
-        return name;
+        let updateAnimation = {};
+        updateAnimation.AnimationName = name;
+        updateAnimation.OnComplete = func;
+        return updateAnimation;
     }
+
+    _heroSwordDrawComplete() {
+        this.swordAttackSequence = 0;
+    }
+
     freeze() {
         this.body.enable = false;
         this.isFrozen = true;
