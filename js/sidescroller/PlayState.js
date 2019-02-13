@@ -287,6 +287,8 @@ class PlayState {
             this.hero.extraJumpsCurrent = 0;
             this.hero.canWallJumpL = true;
             this.hero.canWallJumpR = true;
+            this.hero.isWallJumpPauseL = false;
+            this.hero.isWallJumpPauseR = false;
         }
         else {
             if (debugLevel === 1) {
@@ -504,7 +506,7 @@ class PlayState {
         if (hero.touchingDownCount > 0) {
             touchingDown = true;
         }
-    
+        
         let heroCanLedgeGrab = hero.canLedgeGrab === true && land.grab === true;
         
         let heroCanWallJump = 

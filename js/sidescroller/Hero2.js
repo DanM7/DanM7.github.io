@@ -204,12 +204,10 @@ class Hero2 extends Phaser.Sprite {
         // falling
         else if (this.body.velocity.y >= 0 && this.touchingDownCount == 0) {
             name = ANIMATION_HERO_FALL;
-            //if (debugLevel===1) PlayState.game.debug.body(this);
         }
         // jumping
         else if (this.isJumpingSingle) {
             name = ANIMATION_HERO_JUMP;
-            //if (debugLevel===1) PlayState.game.debug.body(this);
         }
         else if (this.isJumpingExtra) {
             name = ANIMATION_HERO_JUMP_EXTRA;
