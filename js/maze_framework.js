@@ -4,6 +4,15 @@ var MAZE = (function () {
     my.map = [];
     
     // public readonly properties:
+
+    const MAP_SPACE_WALL = 0;
+    Object.defineProperty(my , "MAP_SPACE_WALL", {
+        value: MAP_SPACE_WALL,
+        writable: false,
+        enumerable: true,
+        configurable: true
+    });
+
     const MAP_SPACE_FREE = 1;
     Object.defineProperty(my , "MAP_SPACE_FREE", {
         value: MAP_SPACE_FREE,
@@ -11,9 +20,26 @@ var MAZE = (function () {
         enumerable: true,
         configurable: true
     });
-    const MAP_SPACE_WALL = 0;
-    Object.defineProperty(my , "MAP_SPACE_WALL", {
-        value: MAP_SPACE_WALL,
+
+    const MAP_SPACE_DOOR = 2;
+    Object.defineProperty(my , "MAP_SPACE_DOOR", {
+        value: MAP_SPACE_DOOR,
+        writable: false,
+        enumerable: true,
+        configurable: true
+    });
+
+    const MAP_SPACE_KEY = 3;
+    Object.defineProperty(my , "MAP_SPACE_KEY", {
+        value: MAP_SPACE_KEY,
+        writable: false,
+        enumerable: true,
+        configurable: true
+    });
+
+    const MAP_SPACE_COIN = 4;
+    Object.defineProperty(my , "MAP_SPACE_COIN", {
+        value: MAP_SPACE_COIN,
         writable: false,
         enumerable: true,
         configurable: true
