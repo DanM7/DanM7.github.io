@@ -2,8 +2,9 @@
     "maze": {
         "level": 1,
         "pathWidth": 160,
-        "width": 3,
-        "height": 6
+        "width": 4,
+        "height": 4,
+        "levelTypeId":"lava"
     },
 
     "hero": {
@@ -16,6 +17,11 @@
         "pos": "random",
         
         "nextLevelIncrement": 0    
+    },
+
+    "coins": {
+        "count": 20,
+        "pos": "random"
     },
 
     "food": {
