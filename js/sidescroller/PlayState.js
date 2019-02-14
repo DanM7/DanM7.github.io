@@ -211,7 +211,6 @@ class PlayState {
         debugLabel2.text = debugTextKeyD;
         debugLabelFps.text = (fps < 40) ? "FPS: " + fps : "";
     
-        //this._addTilesToGame(this.mapBoundsTiles);
         this._renderTiles(this.boundingBoxes, this.mapBoundsTiles);
 
         this._handleCollisions();
@@ -655,7 +654,6 @@ class PlayState {
         // consolidated off the original 2D array maze:  
         this.boundingBoxes = MAZE.buildBoundingBoxes(this.mapBounds, this.wall);
 
-        //this.mapBoundsTiles = this.game.add.group();
         this.mapBoundsTiles = this._buildMazeTileGroups(this.boundingBoxes);
         
         this.boundingBoxes.forEach(function (bbox) {
@@ -692,6 +690,7 @@ class PlayState {
         // }, this);
     
         //#region Door
+
         let initialDoorX = 0;
         let initialDoorY = 0;
         let mapPosDoorX = 0;
@@ -717,10 +716,14 @@ class PlayState {
             initialDoorY = mapPosDoorY*pathWidth + (pathWidth);
         }
         
+        this.mapBounds[mapPosDoorY][mapPosDoorX] = MAZE.MAP_SPACE_DOOR;
+
         this._spawnDoor(initialDoorX, initialDoorY, data.door);
+
         //#endregion Door
         
         //#region Key
+
         let initialKeyX = 0;
         let initialKeyY = 0;
         let mapPosKeyX = 0;
@@ -733,7 +736,7 @@ class PlayState {
             initialKeyY = data.key.y;
         }
         else if (data.key.pos && data.key.pos === "random") {
-            let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, 0);
+            let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, MAZE.MAP_SPACE_FREE);
             initialKeyX = freeSpace.columnIndex*pathWidth + (pathWidth/2);
             initialKeyY = freeSpace.rowIndex*pathWidth + (pathWidth/2);
         }
@@ -750,10 +753,15 @@ class PlayState {
             initialKeyX = mapPosKeyX*pathWidth + (pathWidth/2);
             initialKeyY = mapPosKeyY*pathWidth + (pathWidth/2);
         }
+        
+        this.mapBounds[mapPosKeyY][mapPosKeyX] = MAZE.MAP_SPACE_KEY;
+
         this._spawnKey(initialKeyX, initialKeyY);
+
         //#endregion Key
         
         //#region Hero
+
         let initialHeroX = 0;
         let initialHeroY = 0;
         if (
@@ -783,12 +791,6 @@ class PlayState {
             initialHeroY = heroNode.x*pathWidth + (pathWidth/4);
         }
     
-        // Hero (classic):
-        //this.hero = new Hero2(this.game, initialHeroX, initialHeroY);
-        //this.game.add.existing(this.hero);
-        // Hero (ES6):
-        let hero2 = new Hero2(this.game, initialHeroX, initialHeroY, 'hero');
-
         // ToDo ES6: load this from JSON. This should be game-specific data, not hardcoded.
         // animations ('name', [frames], fps, looped?)
         let heroAnimations = [
@@ -809,12 +811,29 @@ class PlayState {
             new animationData('animationHeroSwordAttack2', [53,54,55,56,57,58], 8, false),
             new animationData('die', [5, 6, 5, 6, 5, 6, 5, 6], 12)
         ];
+
+        let hero2 = new Hero2(this.game, initialHeroX, initialHeroY, 'hero');
         hero2.addAnimations(heroAnimations);
         this.hero = hero2
         this.game.add.existing(this.hero);
     
         //#endregion Hero
         
+        // spawn important objects
+        if (data.coins) {
+            if (typeof data.coins.pos !== 'undefined' && data.coins.pos === "random") {
+                let totalCoins = (typeof data.coins.count !== 'undefined') ? data.coins.count : 0;
+                for (var cc = 0; cc < totalCoins; cc++) {
+                    let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, MAZE.MAP_SPACE_FREE);
+                    mapPosDoorX = freeSpace.columnIndex;
+                    mapPosDoorY = freeSpace.rowIndex;
+                    this.mapBounds[mapPosDoorY][mapPosDoorX] = MAZE.MAP_SPACE_COIN;
+                    let coinGameX = mapPosDoorX*pathWidth + (pathWidth/2);
+                    let coinGameY = mapPosDoorY*pathWidth + (pathWidth/2);
+                    this._spawnCoin(coinGameX, coinGameY);
+                }
+            }
+        }
     }
 
     _buildMazeTileGroups(boundingBoxes) {
@@ -1016,7 +1035,6 @@ class PlayState {
         return result;
     }
 
-    // this.boundingBoxes, this.mapBoundsTiles
     _renderTiles(allBoxes, groupsToRender) {
         let totalTilesDrawn = 0;
 
@@ -1066,7 +1084,6 @@ class PlayState {
         tileGroup.callAll('kill');
         tileGroup.destroy(true, true);
 
-        let totalTilesDrawn = 0;
         // iterate over the map bounds and draw the tiles in each cell:
         for (var iMapCol = 0; iMapCol < this.mapBounds[0].length; iMapCol++) {
             for (var iMapRow = 0; iMapRow < this.mapBounds.length; iMapRow++) {
@@ -1159,7 +1176,15 @@ class PlayState {
     
         this._spawnKey(data.key.x, data.key.y);
         this._spawnDoor(data.door.x, data.door.y);
-    
+        
+        // spawn important objects
+        if (data.coins) {
+            //data.coins.forEach(this._spawnCoin, this);
+            data.coins.forEach(function (c) {
+                this._spawnCoin(c.x, c.y);
+            }, this);
+        }
+
         // spawn hero
         let initialHeroX = (data.hero.x32 >= 0 ? data.hero.x32 * this.tileWidth : data.hero.x);
         let initialHeroY = (data.hero.y32 >= 0 ? data.hero.y32 * this.tileWidth : data.hero.y);
@@ -1198,11 +1223,6 @@ class PlayState {
     
             this._setLevelDataFromJson(data);
         }
-        
-        // spawn important objects
-        if (data.coins) {
-            data.coins.forEach(this._spawnCoin, this);
-        }
     
         this.game.camera.follow(this.hero);
     }
@@ -1234,8 +1254,8 @@ class PlayState {
         sprite.body.allowGravity = false;
     }
     
-    _spawnCoin(coin) {
-        let sprite = this.coins.create(coin.x, coin.y, 'coin');
+    _spawnCoin(coinX, coinY) {
+        let sprite = this.coins.create(coinX, coinY, 'coin');
         sprite.anchor.set(0.5, 0.5);
     
         // physics (so we can detect overlap with the hero)
@@ -1284,16 +1304,16 @@ class PlayState {
         //#region Upper Left
 
         const NUMBERS_STR = '0123456789X ';
-        this.coinFont = this.game.add.retroFont('font:numbers', 20, 26,
-            NUMBERS_STR, 6);
+        this.coinFont = this.game.add.retroFont('font:numbers', 20, 26, NUMBERS_STR, 6);
 
-        this.keyIcon = this.game.make.image(0, 19, 'icon:key');
-        this.keyIcon.anchor.set(0, 0.5);
-
-        let coinIcon = this.game.make.image(this.keyIcon.width + 7, 0, 'icon:coin');
-        let coinScoreImg = this.game.make.image(coinIcon.x + coinIcon.width,
-            coinIcon.height / 2, this.coinFont);
+        let coinHeight = 15;
+        let coinIcon = this.game.make.image(0, coinHeight, 'icon:coin');
+        coinIcon.anchor.set(0, 0.5);
+        let coinScoreImg = this.game.make.image(coinIcon.width + 3, coinHeight, this.coinFont);
         coinScoreImg.anchor.set(0, 0.5);
+
+        this.keyIcon = this.game.make.image(2, coinIcon.height + 19, 'icon:key');
+        this.keyIcon.anchor.set(0, 0.5);
 
         //#endregion Upper Left
 
