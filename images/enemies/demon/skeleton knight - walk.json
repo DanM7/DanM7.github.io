@@ -1,0 +1,116 @@
+{"frames": {
+
+"Background (80ms).png":
+{
+	"frame": {"x":0,"y":0,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 2 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":132,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 3 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":264,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 4 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":396,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 5 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":528,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 6 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":660,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 7 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":792,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 8 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":924,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 9 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":1056,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 10 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":1188,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 11 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":1320,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 12 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":1452,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+},
+"Frame 13 (80ms) (replace).png":
+{
+	"frame": {"x":0,"y":1584,"w":88,"h":132},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":88,"h":132},
+	"sourceSize": {"w":88,"h":132}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "skeleton knight - walk.png",
+	"format": "RGBA8888",
+	"size": {"w":88,"h":1716},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:be0bf6abeccdd07836a914116d4be64d:427c4118d4dc6be93811e6efd2e50e16:9cf12dd069eee2a6fca2616b738e1d7e$"
+}
+}
