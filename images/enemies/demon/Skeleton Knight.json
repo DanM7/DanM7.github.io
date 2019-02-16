@@ -1,1 +1,156 @@
+{"frames": {
 
+"Background (100ms).png":
+{
+	"frame": {"x":0,"y":0,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 2 (100ms) (replace).png":
+{
+	"frame": {"x":301,"y":0,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 3 (100ms) (replace).png":
+{
+	"frame": {"x":602,"y":0,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 4 (100ms) (replace).png":
+{
+	"frame": {"x":903,"y":0,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 5 (100ms) (replace).png":
+{
+	"frame": {"x":1204,"y":0,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 6 (100ms) (replace).png":
+{
+	"frame": {"x":1505,"y":0,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 7 (100ms) (replace).png":
+{
+	"frame": {"x":0,"y":259,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 8 (100ms) (replace).png":
+{
+	"frame": {"x":301,"y":259,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 9 (100ms) (replace).png":
+{
+	"frame": {"x":602,"y":259,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 10 (100ms) (replace).png":
+{
+	"frame": {"x":903,"y":259,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 11 (100ms) (replace).png":
+{
+	"frame": {"x":1204,"y":259,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 12 (100ms) (replace).png":
+{
+	"frame": {"x":1505,"y":259,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 13 (100ms) (replace).png":
+{
+	"frame": {"x":0,"y":518,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 14 (100ms) (replace).png":
+{
+	"frame": {"x":301,"y":518,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 15 (100ms) (replace).png":
+{
+	"frame": {"x":602,"y":518,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 16 (100ms) (replace).png":
+{
+	"frame": {"x":903,"y":518,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 17 (100ms) (replace).png":
+{
+	"frame": {"x":1204,"y":518,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+},
+"Frame 18 (100ms) (replace).png":
+{
+	"frame": {"x":1505,"y":518,"w":301,"h":259},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":301,"h":259},
+	"sourceSize": {"w":301,"h":259}
+}},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "Skeleton Knight.png",
+	"format": "RGBA8888",
+	"size": {"w":1806,"h":777},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:5d2bcfe14f955a014345c14e1cd3db31:9649e5888dcc92f70866eb4cad866e5e:b8041641ba1c92479ead03cd6aa5b213$"
+}
+}
