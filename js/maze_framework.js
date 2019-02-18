@@ -45,6 +45,14 @@ var MAZE = (function () {
         configurable: true
     });
 
+    const MAP_SPACE_ENEMY = 5;
+    Object.defineProperty(my , "MAP_SPACE_ENEMY", {
+        value: MAP_SPACE_ENEMY,
+        writable: false,
+        enumerable: true,
+        configurable: true
+    });
+
     function _boundingBox(x, y, w, h, id) {
         this.x = x;
         this.y = y;

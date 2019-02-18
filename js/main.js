@@ -88,6 +88,24 @@ LoadingState.preload = function () {
     this.game.load.image('controlsFullScreenExit', 'images/controls/flatDark/flatDark34.png');
     this.game.load.image('controlsSettings', 'images/controls/flatDark/flatDark13.png');
 
+    // Enemies: atlasJSONHash('cityscene', 'cityscene.png', 'cityscene.json')
+    //#region Enemies
+
+    // this.game.load.atlasJSONHash('demonSkeletonKnightWalk', 
+    //     '/images/enemies/demon/skeleton_knight_walk.png', 
+    //     '/images/enemies/demon/skeleton_knight_walk.json');
+    // this.game.load.atlasJSONHash('demonSkeletonKnightAttack', 
+    //     '/images/enemies/demon/skeleton_knight_attack.png', 
+    //     '/images/enemies/demon/skeleton_knight_attack.json');
+    this.game.load.spritesheet('demonSkeletonKnightWalk', 
+        'images/enemies/demon/skeleton_knight_walk.png', 
+        88, 132); // 1716/13 = 132?
+    this.game.load.spritesheet('demonSkeletonKnightAttack', 
+        'images/enemies/demon/skeleton_knight_attack.png', 
+        (1806/6), (777/3));
+
+    //#endregion Enemies
+
     // Fonts:
     this.game.load.image('font:numbers', 'images/numbers.png');
 
