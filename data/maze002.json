@@ -24,6 +24,19 @@
         "pos": "random"
     },
 
+    "enemies": {
+        "sentries": {
+            "enemyType": "sentry",
+            "pos": "random",
+            "initialSpritesheet": "demonSkeletonKnightWalk",
+            "initialAnimation": "walk",
+            "offsetY": 40,
+            "scale": "0.6",
+            "velocityX": "19",
+            "total": 4
+        }
+    },
+
     "food": {
         "pos": "random",
     
