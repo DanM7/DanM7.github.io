@@ -31,7 +31,6 @@ class Hero2 extends Phaser.Sprite {
     constructor(game, x, y, spriteName) {
         super(game, x + 40, y, spriteName);
         
-        //alert("Hero2 constructor start")
         this.anchor.set(0.5, 0.5);
 
         // physics properties

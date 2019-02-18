@@ -26,6 +26,9 @@ var buttonScale = 2;
 
 var lastLoop = new Date();
 
+var FRAME_TOP_LEFT = 0;
+var FRAME_TOP_RIGHT = 2;
+
 class PlayState {
     constructor(game, isMobile) {
         this.game = game;
@@ -34,10 +37,16 @@ class PlayState {
         this.keyUpDurationDown = null;
 
         this.mapBounds = null;
+
+        //this.enemies = null;
+        this.enemyWalls = null;
+
         this.boundingBoxes = null;
 
         this.wall = 0;
         this.tileWidth = 32;
+
+        this.fps = 60;
 
         this.mapBoundsTiles = null;
     }
@@ -203,38 +212,25 @@ class PlayState {
     
     // Game State 4: Update
     update() {
-        var thisLoop = new Date();
-        let fps = this.getFps(thisLoop, lastLoop);
-        lastLoop = thisLoop;
+        this._updateFps();
+        this._renderTiles(this.boundingBoxes, this.mapBoundsTiles);
+        this._handleCollisions();
+        this._handleInput();
+        this._setDebugLevels();
+    }
     
+    _updateFps() {
+        var thisLoop = new Date();
+        this.fps = this.getFps(thisLoop, lastLoop);
+        lastLoop = thisLoop;
+    }
+
+    _setDebugLevels() {
+        // Debug text:
         debugLabel1.text = debugText1;
         debugLabel2.text = debugTextKeyD;
-        debugLabelFps.text = (fps < 40) ? "FPS: " + fps : "";
-    
-        this._renderTiles(this.boundingBoxes, this.mapBoundsTiles);
+        debugLabelFps.text = (this.fps < 40) ? "FPS: " + this.fps : "";
 
-        this._handleCollisions();
-    
-        if (this.hero.isLedgeGrabbing || this.hero.isWallJumpPauseL || this.hero.isWallJumpPauseR) {
-            this.hero.body.velocity.y = 0;
-            this.hero.body.allowGravity = false;
-            if (this.hero.isWallJumpPauseL) {
-                this.hero.isWallJumpPauseLDuration++;
-                this.hero.wallJumpPauseLHeight = this.hero.y;
-            }
-            if (this.hero.isWallJumpPauseR) {
-                this.hero.isWallJumpPauseRDuration++;
-                this.hero.wallJumpPauseRHeight = this.hero.y;
-            }
-        }
-        else {
-            this.hero.body.allowGravity = true;
-            this.hero.isWallJumpPauseLDuration = 0;
-            this.hero.isWallJumpPauseRDuration = 0;
-        }
-    
-        this._handleInput();
-    
         if (debugLevel === 0) {
             this.game.debug.reset();
         }
@@ -253,15 +249,6 @@ class PlayState {
             //this.game.debug.spriteInputInfo(controlsDPadCircle, this.tileWidth*2, this.tileWidth*5);
             this.game.debug.pointer(this.game.input.activePointer);
         }
-    
-        // update scoreboards
-        this.coinFont.text = "x" + padLeft(this.coinPickupCount, 2, '0');
-        
-        this.keyIcon.frame = this.hasKey ? 1 : 0;
-    }
-    
-    shutdown() {
-        this.bgm.stop();
     }
     
     // Handle collisions and overlaps;
@@ -270,6 +257,9 @@ class PlayState {
     _handleCollisions() {    
         // Reset hero's collision-based state:
         this.hero.resetCollisionStates();
+
+        this.game.physics.arcade.collide(
+            this.enemyWalls, this.enemies);
     
         this.landscapeBounds.forEach(function (land) {
             this.game.physics.arcade.collide(this.hero, land
@@ -330,8 +320,31 @@ class PlayState {
         // collision: hero vs enemies (kill or die)
         // this.game.physics.arcade.overlap(this.hero, this.spiders,
         //     this._onHeroVsEnemy, null, this);
+    
+        // Post-collision handling:
+        if (this.hero.isLedgeGrabbing || this.hero.isWallJumpPauseL || this.hero.isWallJumpPauseR) {
+            this.hero.body.velocity.y = 0;
+            this.hero.body.allowGravity = false;
+            if (this.hero.isWallJumpPauseL) {
+                this.hero.isWallJumpPauseLDuration++;
+                this.hero.wallJumpPauseLHeight = this.hero.y;
+            }
+            if (this.hero.isWallJumpPauseR) {
+                this.hero.isWallJumpPauseRDuration++;
+                this.hero.wallJumpPauseRHeight = this.hero.y;
+            }
+        }
+        else {
+            this.hero.body.allowGravity = true;
+            this.hero.isWallJumpPauseLDuration = 0;
+            this.hero.isWallJumpPauseRDuration = 0;
+        }
     }
     
+    shutdown() {
+        this.bgm.stop();
+    }
+
     _handleInput() {
         let xDir = 0;
         let heroCanMove = !this.hero.isLedgeGrabbing && !this.hero.isWallJumpPauseL && !this.hero.isWallJumpPauseR;
@@ -549,12 +562,16 @@ class PlayState {
         this.sfx.key.play();
         key.kill();
         this.hasKey = true;
+        this.keyIcon.frame = 1;
     }
     
     _onHeroVsCoin(hero, coin) {
         this.sfx.coin.play();
         coin.kill();
         this.coinPickupCount++;
+    
+        // update scoreboards
+        this.coinFont.text = "x" + padLeft(this.coinPickupCount, 2, '0');
     }
     
     _onHeroInsideLandscape(hero, landBox) {
@@ -816,15 +833,39 @@ class PlayState {
         hero2.addAnimations(heroAnimations);
         this.hero = hero2
         this.game.add.existing(this.hero);
-    
+
         //#endregion Hero
         
-        // spawn important objects
+        //#region Enemies
+        
+        let badGuyBuilder = new EnemyFactory(this.game);        
+        for (var badGuyEntry in data.enemies) {
+            let badGuyData = data.enemies[badGuyEntry];
+            let repeatEnemy = (typeof badGuyData.total !== 'undefined' ? badGuyData.total : 1)
+            for (var rep = 1; rep <= repeatEnemy; rep++) {
+                let enemySpace = this._getEnemyMapPosition(badGuyData);
+                this.mapBounds[enemySpace.rowIndex][enemySpace.columnIndex] = MAZE.MAP_SPACE_ENEMY;
+                let enemyGameX = enemySpace.columnIndex*pathWidth + (pathWidth/2);
+                let enemyGameY = enemySpace.rowIndex*pathWidth + (pathWidth/2) + badGuyData.offsetY;
+                let enemySprite = badGuyBuilder.createEnemySprite(badGuyData, enemyGameX, enemyGameY);
+                enemySprite.update = this._EnemyMovementSentry;
+                this.enemies.add(enemySprite);
+            }
+        };
+
+        //#endregion Enemies
+        
+        //#region Coins
+
         if (data.coins) {
             if (typeof data.coins.pos !== 'undefined' && data.coins.pos === "random") {
                 let totalCoins = (typeof data.coins.count !== 'undefined') ? data.coins.count : 0;
                 for (var cc = 0; cc < totalCoins; cc++) {
                     let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, MAZE.MAP_SPACE_FREE);
+                    if (freeSpace.columnIndex === null) {
+                        // There's no more free spaces!
+                        break;
+                    }
                     mapPosDoorX = freeSpace.columnIndex;
                     mapPosDoorY = freeSpace.rowIndex;
                     this.mapBounds[mapPosDoorY][mapPosDoorX] = MAZE.MAP_SPACE_COIN;
@@ -834,6 +875,34 @@ class PlayState {
                 }
             }
         }
+
+        //#endregion Coins
+    }
+
+    _EnemyMovementSentry() {
+        // check against walls and reverse direction if necessary:
+        if (this.body.touching.right || this.body.blocked.right) {
+            this.scale.x *= -1;
+            this.body.velocity.x = -1 * this.body.speed; // turn left
+        }
+        else if (this.body.touching.left || this.body.blocked.left) {
+            this.scale.x *= -1;
+            this.body.velocity.x = this.body.speed; // turn right
+        }
+    };
+    
+    _getEnemyMapPosition(badGuyJson) {
+        let enemySpace = null;
+        if (badGuyJson.pos === "random") {
+            let requireBorderUnderneath = [ 
+                { "x": 0, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL },
+                { "x": 1, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL },
+                { "x": 2, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL } 
+            ];
+            enemySpace = MAZE.getRandomSpaceByValue(
+                this.mapBounds, MAZE.MAP_SPACE_FREE, requireBorderUnderneath);
+        }
+        return enemySpace;
     }
 
     _buildMazeTileGroups(boundingBoxes) {
@@ -845,13 +914,16 @@ class PlayState {
                     let tileFrame = this.getMazeTileFrame( 
                         bX, bY, bbox);
                     if (tileFrame !== null) {
-                        bboxGroup.add(
-                            this.game.add.image(
-                                bbox.x + bX, 
-                                bbox.y + bY,
-                                'landscape', 
-                                tileFrame
-                            )
+                        let gameX = bbox.x + bX;
+                        let gameY = bbox.y + bY;
+                        if (tileFrame === FRAME_TOP_LEFT) {
+                            this._spawnEnemyWall(gameX, gameY, 'left')
+                        }
+                        else if (tileFrame === FRAME_TOP_RIGHT) {
+                            this._spawnEnemyWall(gameX + this.tileWidth, gameY, 'right')
+                        }
+                        bboxGroup.add(this.game.add.image(
+                            gameX, gameY, 'landscape', tileFrame)
                         );
                     }
                 }   
@@ -878,7 +950,7 @@ class PlayState {
 
             if (bY === 0) {
                 // Top row:
-                tileFrame = 0
+                tileFrame = FRAME_TOP_LEFT;
             }
             else if (bY === bbox.h - this.tileWidth) {
                 // Bottom row:
@@ -894,7 +966,7 @@ class PlayState {
 
             if (bY === 0) {
                 // Top row:
-                tileFrame = 2
+                tileFrame = FRAME_TOP_RIGHT;
             }
             else if (bY === bbox.h - this.tileWidth) {
                 // Bottom row:
@@ -1199,14 +1271,16 @@ class PlayState {
         this.coins = this.game.add.group();
         this.landscape = this.game.add.group();
         this.landscapeBounds = this.game.add.group();
+        
+        this.enemies = this.game.add.group();
         this.enemyWalls = this.game.add.group();
-        this.enemyWalls.visible = false;
+        //this.enemyWalls.visible = false;
     
         this.bgDecoration = this.game.add.group();
     
         // enable gravity, from either input JSON or constant:
         this.game.physics.arcade.gravity.y = data.gravity || 1200;
-        
+
         if (data.maze) {
             this._setMazeDataFromJson(data);
         }
@@ -1246,14 +1320,16 @@ class PlayState {
     
     _spawnEnemyWall(x, y, side) {
         let sprite = this.enemyWalls.create(x, y, 'invisible-wall');
-        // anchor and y displacement
+        sprite.alpha = 0;
+        // anchor and y displacement:
         sprite.anchor.set(side === 'left' ? 1 : 0, 1);
-        // physic properties
+
+        // physics properties:
         this.game.physics.enable(sprite);
         sprite.body.immovable = true;
         sprite.body.allowGravity = false;
     }
-    
+
     _spawnCoin(coinX, coinY) {
         let sprite = this.coins.create(coinX, coinY, 'coin');
         sprite.anchor.set(0.5, 0.5);
@@ -1305,6 +1381,7 @@ class PlayState {
 
         const NUMBERS_STR = '0123456789X ';
         this.coinFont = this.game.add.retroFont('font:numbers', 20, 26, NUMBERS_STR, 6);
+        this.coinFont.text = "x" + padLeft(this.coinPickupCount, 2, '0');
 
         let coinHeight = 15;
         let coinIcon = this.game.make.image(0, coinHeight, 'icon:coin');
