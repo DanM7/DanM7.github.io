@@ -88,15 +88,8 @@ LoadingState.preload = function () {
     this.game.load.image('controlsFullScreenExit', 'images/controls/flatDark/flatDark34.png');
     this.game.load.image('controlsSettings', 'images/controls/flatDark/flatDark13.png');
 
-    // Enemies: atlasJSONHash('cityscene', 'cityscene.png', 'cityscene.json')
     //#region Enemies
 
-    // this.game.load.atlasJSONHash('demonSkeletonKnightWalk', 
-    //     '/images/enemies/demon/skeleton_knight_walk.png', 
-    //     '/images/enemies/demon/skeleton_knight_walk.json');
-    // this.game.load.atlasJSONHash('demonSkeletonKnightAttack', 
-    //     '/images/enemies/demon/skeleton_knight_attack.png', 
-    //     '/images/enemies/demon/skeleton_knight_attack.json');
     this.game.load.spritesheet('demonSkeletonKnightWalk', 
         'images/enemies/demon/skeleton_knight_walk.png', 
         88, 132); // 1716/13 = 132?
@@ -107,7 +100,9 @@ LoadingState.preload = function () {
     //#endregion Enemies
 
     // Fonts:
+    //retroFont(font, characterWidth, characterHeight, chars, charsPerRow, xSpacing, ySpacing, xOffset, yOffset)
     this.game.load.image('font:numbers', 'images/numbers.png');
+    this.game.load.image('fonts:x05mo', 'images/fonts-x05mo.png');
 
     // Items:
     //this.game.load.spritesheet('items001', 'images/items/items001.png', 48, 48, 16, 16)
@@ -123,7 +118,11 @@ LoadingState.preload = function () {
 
     const HERO_DEFAULT_SPRIE_WIDTH = 100;
     const HERO_DEFAULT_SPRITE_HEIGHT = 72;
-    //this.game.load.spritesheet(name, source, w, h)
+    //this.game.load.spritesheet(name, source, tileW, tileH)
+
+    //adventurer-v1.5-Sheet.png
+    //adventurer-1.3.2-transparent.png
+
     this.game.load.spritesheet('hero', 'images/bowen/adventurer-1.3.2-transparent.png', 
         HERO_DEFAULT_SPRIE_WIDTH, HERO_DEFAULT_SPRITE_HEIGHT, 104);
         
@@ -132,6 +131,8 @@ LoadingState.preload = function () {
     this.game.load.spritesheet('door', 'images/door.png', 42, 66);
     this.game.load.spritesheet('icon:key', 'images/key_icon.png', 34, 30);
     this.game.load.spritesheet('decoration', 'images/decor.png', 42, 42);
+
+    this.game.load.spritesheet('icon:player1', 'images/face_icon.png', 32, 32);
 
     this.game.load.audio('sfx:jump', 'audio/jump.wav');
     this.game.load.audio('sfx:coin', 'audio/coin.wav');
