@@ -8,8 +8,8 @@ var buttonRight;
 
 let keyPressToggleDebug = true;
 
+let maxDebugLevel = 5; // 0=none;1=keys;2=bodies;3=camera;4=touch;
 let debugLevel = 0;
-let maxDebugLevel = 4; // 0=none;1=keys;2=bodies;3=camera;4=touch;
 
 const controlsAlpha = 0.5;
 const controlsAlphaDown = 0.8;
@@ -29,6 +29,9 @@ var lastLoop = new Date();
 var FRAME_TOP_LEFT = 0;
 var FRAME_TOP_RIGHT = 2;
 
+var graphics;
+var graphicsDebug;
+
 class PlayState {
     constructor(game, isMobile) {
         this.game = game;
@@ -38,7 +41,6 @@ class PlayState {
 
         this.mapBounds = null;
 
-        //this.enemies = null;
         this.enemyWalls = null;
 
         this.boundingBoxes = null;
@@ -182,7 +184,7 @@ class PlayState {
         this.game.camera.flash('#000000');
     
         this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
-    
+
         // create sound entities
         this.sfx = {
             jump: this.game.add.audio('sfx:jump'),
@@ -215,6 +217,7 @@ class PlayState {
         this._updateFps();
         this._renderTiles(this.boundingBoxes, this.mapBoundsTiles);
         this._handleCollisions();
+        this._handleEnemyAI(this.hero);
         this._handleInput();
         this._setDebugLevels();
     }
@@ -232,6 +235,7 @@ class PlayState {
         debugLabelFps.text = (this.fps < 40) ? "FPS: " + this.fps : "";
 
         if (debugLevel === 0) {
+            graphicsDebug.clear();
             this.game.debug.reset();
         }
         else if (debugLevel === 1) {
@@ -249,6 +253,30 @@ class PlayState {
             //this.game.debug.spriteInputInfo(controlsDPadCircle, this.tileWidth*2, this.tileWidth*5);
             this.game.debug.pointer(this.game.input.activePointer);
         }
+        else if (debugLevel === 5) {
+            this.game.debug.reset();
+
+            // draw a line from each of the enemy's AI View at (aiViewX, aiViewY)
+            // to the hero's view at (this.hero.viewX, this.hero.viewY).
+            
+            graphicsDebug.clear();
+            graphicsDebug.lineStyle(4, 0xFF00FF, 1);
+            this.enemies.forEach(function (anEnemy) {
+                //aiViewX
+                graphicsDebug.moveTo(
+                    anEnemy.x + anEnemy.aiViewX, 
+                    anEnemy.y + anEnemy.aiViewY
+                );
+                graphicsDebug.lineTo(this.hero.x, this.hero.y);
+                graphicsDebug.endFill();
+            }, this);
+        }
+        
+        // let line1 = new Phaser.Line(10, 10, 500, 500);
+        // this.game.debug.geom(line1);
+        // this.game.debug.lineInfo(line1, 32, 32);
+
+        
     }
     
     // Handle collisions and overlaps;
@@ -280,10 +308,6 @@ class PlayState {
             this.hero.isWallJumpPauseR = false;
         }
         else {
-            if (debugLevel === 1) {
-                this.game.debug.reset();
-            }
-    
             //isWallJumpPauseLHeight, now wallJumpPauseLHeight
             if (this.hero.y > this.hero.wallJumpPauseLHeight + 128) {
                 this.hero.canWallJumpL = true;
@@ -343,6 +367,12 @@ class PlayState {
     
     shutdown() {
         this.bgm.stop();
+    }
+
+    _handleEnemyAI(somePlayer) {
+        this.enemies.forEach(function (anEnemy) {
+            anEnemy.handleAI(somePlayer);
+        }, this);
     }
 
     _handleInput() {
@@ -406,12 +436,10 @@ class PlayState {
                 
                 if (debugLevel === maxDebugLevel) {
                     debugLevel = 0;
-                    debugTextKeyD = "";//debugTextKeyD.replace(" Debug=y;", " Debug=n;");
+                    debugTextKeyD = "";
                 }
                 else {
                     debugLevel++;
-                    //debugTextKeyD = "Keys: Up=n; Down=n; Left=n; Right=n; D=n; Debug=" + (debugLevel>0 ? "y" : "n") + ";"
-                    //debugTextKeyD = debugTextKeyD.replace(" Debug=n;", " Debug=y;");
                 }
             }
         }
@@ -565,13 +593,19 @@ class PlayState {
         this.keyIcon.frame = 1;
     }
     
+    _updateCoinText() {
+        let coinTotalsLength = this.coinTotalAvailable / 10;
+        this.coinFont.text = 
+            padLeft(this.coinPickupCount, coinTotalsLength, '0') + 
+            "/" + 
+            padLeft(this.coinTotalAvailable, coinTotalsLength, '0');
+    }
+
     _onHeroVsCoin(hero, coin) {
         this.sfx.coin.play();
         coin.kill();
         this.coinPickupCount++;
-    
-        // update scoreboards
-        this.coinFont.text = "x" + padLeft(this.coinPickupCount, 2, '0');
+        this._updateCoinText(this.coinPickupCount, 20);
     }
     
     _onHeroInsideLandscape(hero, landBox) {
@@ -661,7 +695,7 @@ class PlayState {
         this.game.world.setBounds(0, 0, boundW, boundH);
         this.wall = pathWidth; // Width of the walls between paths;    
         
-        var graphics = this.game.add.graphics(0, 0);
+        graphics = this.game.add.graphics(0, 0);
         graphics.beginFill(0x171c23); // ToDo: this color should come from JSON based on the tileset.
 
         // 2D array where values correspond to free-space or wall:
@@ -689,7 +723,6 @@ class PlayState {
             //landItemBound.tint = Math.random() * 0xffffff;
             landItemBound.tint = 0x171c23;
             graphics.lineStyle(4, 0x171c23, 1);
-            //graphics.drawRect(bbox.x, bbox.y, bbox.w, bbox.h);
             graphics.drawRect(
                 bbox.x + this.tileWidth, 
                 bbox.y + this.tileWidth, 
@@ -846,9 +879,11 @@ class PlayState {
                 let enemySpace = this._getEnemyMapPosition(badGuyData);
                 this.mapBounds[enemySpace.rowIndex][enemySpace.columnIndex] = MAZE.MAP_SPACE_ENEMY;
                 let enemyGameX = enemySpace.columnIndex*pathWidth + (pathWidth/2);
-                let enemyGameY = enemySpace.rowIndex*pathWidth + (pathWidth/2) + badGuyData.offsetY;
+                let enemyGameY = enemySpace.rowIndex*pathWidth + (pathWidth/2) + badGuyData.yOffsetWalk;
                 let enemySprite = badGuyBuilder.createEnemySprite(badGuyData, enemyGameX, enemyGameY);
                 enemySprite.update = this._EnemyMovementSentry;
+                enemySprite.yOffsetWalk = badGuyData.yOffsetWalk;
+                enemySprite.yOffsetAttack = badGuyData.yOffsetAttack;
                 this.enemies.add(enemySprite);
             }
         };
@@ -859,8 +894,8 @@ class PlayState {
 
         if (data.coins) {
             if (typeof data.coins.pos !== 'undefined' && data.coins.pos === "random") {
-                let totalCoins = (typeof data.coins.count !== 'undefined') ? data.coins.count : 0;
-                for (var cc = 0; cc < totalCoins; cc++) {
+                this.coinTotalAvailable = (typeof data.coins.count !== 'undefined') ? data.coins.count : 0;
+                for (var cc = 0; cc < this.coinTotalAvailable; cc++) {
                     let freeSpace = MAZE.getRandomSpaceByValue(this.mapBounds, MAZE.MAP_SPACE_FREE);
                     if (freeSpace.columnIndex === null) {
                         // There's no more free spaces!
@@ -895,6 +930,9 @@ class PlayState {
         let enemySpace = null;
         if (badGuyJson.pos === "random") {
             let requireBorderUnderneath = [ 
+                { "x": 0, "y": 0, "spaceValue": MAZE.MAP_SPACE_FREE },
+                { "x": 1, "y": 0, "spaceValue": MAZE.MAP_SPACE_FREE },
+                { "x": 2, "y": 0, "spaceValue": MAZE.MAP_SPACE_FREE },
                 { "x": 0, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL },
                 { "x": 1, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL },
                 { "x": 2, "y": 1, "spaceValue": MAZE.MAP_SPACE_WALL } 
@@ -1281,6 +1319,10 @@ class PlayState {
         // enable gravity, from either input JSON or constant:
         this.game.physics.arcade.gravity.y = data.gravity || 1200;
 
+        graphicsDebug = this.game.add.graphics(0, 0);
+        graphicsDebug.beginFill(0xFF00FF);
+        graphicsDebug.lineStyle(4, 0xFF00FF, 1);
+                    
         if (data.maze) {
             this._setMazeDataFromJson(data);
         }
@@ -1376,20 +1418,40 @@ class PlayState {
         const controlsX = 10;
         let buttonUpX = controlsX + controlWidthLR - controlWidthLR/2 + controlsPad;
         let buttonUpY = this.game.height - screenPad - controlHeightUD*2 - controlsPad;
+
+        const ALPHANUMERIC = 
+            ' !"#$%&\'()*+,-.' + '/0123456789:;<=' + 
+            '>?@ABCDEFGHIJKL' + 'MNOPQRSTUVWXYZ[' + 
+            '\\]^_ abcdefghij' + 'klmnopqrstuvwxy' + 
+            'Z{|}~ cueaaaace' + 'eeiiiaaeaaoooou';
+        let player1Font = this.game.add.retroFont('fonts:x05mo', 20, 20, ALPHANUMERIC, 15);
         
         //#region Upper Left
 
-        const NUMBERS_STR = '0123456789X ';
-        this.coinFont = this.game.add.retroFont('font:numbers', 20, 26, NUMBERS_STR, 6);
-        this.coinFont.text = "x" + padLeft(this.coinPickupCount, 2, '0');
+        let iconRowHeight = 48;
+        let initialHeight = 15;
 
-        let coinHeight = 15;
-        let coinIcon = this.game.make.image(0, coinHeight, 'icon:coin');
+        let faceHeight = (0 * iconRowHeight) + initialHeight;
+        let faceIcon = this.game.make.image(3, faceHeight, 'icon:player1');
+        faceIcon.anchor.set(0, 0.5);
+        faceIcon.frame = 3;
+
+        let player1NameImg = this.game.make.image(faceIcon.width + 10, faceHeight + 2, player1Font);
+        player1NameImg.anchor.set(0, 0.5);
+        player1Font.text = "PLAYER 1";
+
+        this.coinFont = this.game.add.retroFont('fonts:x05mo', 20, 20, ALPHANUMERIC, 15);
+        this._updateCoinText();
+
+        let coinHeight = faceIcon.height + 25;
+        let coinIcon = this.game.make.image(10, coinHeight, 'icon:coin');
         coinIcon.anchor.set(0, 0.5);
-        let coinScoreImg = this.game.make.image(coinIcon.width + 3, coinHeight, this.coinFont);
+        coinIcon.scale.setTo(0.6, 0.6);
+        let coinScoreImg = this.game.make.image(coinIcon.width + 20, coinHeight, this.coinFont);
         coinScoreImg.anchor.set(0, 0.5);
 
-        this.keyIcon = this.game.make.image(2, coinIcon.height + 19, 'icon:key');
+        let keyHeight = coinHeight + 41;
+        this.keyIcon = this.game.make.image(2, keyHeight, 'icon:key');
         this.keyIcon.anchor.set(0, 0.5);
 
         //#endregion Upper Left
@@ -1497,6 +1559,7 @@ class PlayState {
                 hud.add(controlButton);
             });
         }
+
         //#region Debugging
 
         debugLabel1 = this.game.add.text(this.tileWidth*6, this.tileWidth*0.2, debugText1, 
@@ -1512,6 +1575,8 @@ class PlayState {
     
         //#endregion Debugging
 
+        hud.add(faceIcon);
+        hud.add(player1NameImg);
         hud.add(coinIcon);
         hud.add(coinScoreImg);
         hud.add(this.keyIcon);
