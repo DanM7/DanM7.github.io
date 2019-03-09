@@ -28,11 +28,18 @@
         "sentries": {
             "enemyType": "sentry",
             "pos": "random",
+            "spriteSheetWalk": "demonSkeletonKnightWalk",
+            "spriteSheetAttack": "demonSkeletonKnightAttack",
             "initialSpritesheet": "demonSkeletonKnightWalk",
             "initialAnimation": "walk",
-            "offsetY": 40,
-            "scale": "0.6",
-            "velocityX": "19",
+            "aiViewX": 0,
+            "aiViewY": -10,
+            "yOffsetWalk": 40,
+            "yOffsetAttack": 32,
+            "scale": 0.6,
+            "velocityX": 22,
+            "attackRange": 70,
+
             "total": 4
         }
     },
