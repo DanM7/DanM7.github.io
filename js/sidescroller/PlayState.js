@@ -31,6 +31,7 @@ var FRAME_TOP_RIGHT = 2;
 
 var graphics;
 var graphicsDebug;
+//var graphicsDebugEnemy;
 
 class PlayState {
     constructor(game, isMobile) {
@@ -86,7 +87,9 @@ class PlayState {
     
         this.hasCheese = false;
         
-        this.level = (typeof data.level !== 'undefined') ? data.level : 0;
+        this.level = 
+            (typeof data !== 'undefined' && typeof data.level !== 'undefined') ? 
+            data.level : 0;
     }
 
     getFps(thisLoop, lastLoop) {
@@ -195,11 +198,6 @@ class PlayState {
         };
         this.bgm = this.game.add.audio('bgm');
         this.bgm.loopFull();
-    
-        // Create level entities and decoration:
-        // let bg = this.game.add.image(0, 0, 'background');
-        // bg.fixedToCamera = true;
-        addBackgroundToGame(this.game, 'background');
     
         // ToDo: there needs to be some initial json load that says 
         // what json should be loaded next.
@@ -318,32 +316,78 @@ class PlayState {
         }
     
         // hero vs coins (pick up)
-        this.game.physics.arcade.overlap(this.hero, this.coins, this._onHeroVsCoin, null, this);
-    
+        if (this.coinPickupCount < this.coinTotalAvailable) {
+            this.game.physics.arcade.overlap(this.hero, this.coins, this._onHeroVsCoin, null, this);
+        }
+
         // hero vs key (pick up)
-        this.game.physics.arcade.overlap(this.hero, this.key, this._onHeroVsKey, null, this);
+        if (!this.hasKey) {
+            this.game.physics.arcade.overlap(this.hero, this.key, this._onHeroVsKey, null, this);
+        }
     
         // hero vs door (end level)
-        this.game.physics.arcade.overlap(this.hero, this.door, this._onHeroVsDoor,
-            // ignore if there is no key or the player is on air
-            // TRY: Add an "Enter" button requirement.
-            //   Must be standing to insert/turn key. Maybe doors with keys require
-            //   standing and an "Enter", but something like a portal would not 
-            //   and you could just fall into that (so the only req is `hasKey`).
-            function (hero, door) {
-                return this.hasKey && hero.touchingDownCount > 0;
-            }, this
-        );
-    
-        this.itemsFood.forEach(function (food) {
-            this.game.physics.arcade.collide(this.hero, food
-                , this._onHeroCollisionWithFood, null, null
+        if (this.hasKey && this.hero.touchingDownCount > 0) {
+            this.game.physics.arcade.overlap(this.hero, this.door, this._onHeroVsDoor,
+                // ignore if there is no key or the player is on air
+                // TRY: Add an "Enter" button requirement.
+                //   Must be standing to insert/turn key. Maybe doors with keys require
+                //   standing and an "Enter", but something like a portal would not 
+                //   and you could just fall into that (so the only req is `hasKey`).
+                function (hero, door) {
+                    return this.hasKey && hero.touchingDownCount > 0;
+                }, this
             );
+        }
+        
+        //graphicsDebugEnemy.clear();
+        this.enemies.forEach(function (enemy) {
+            if (!enemy.isAttacking || enemy.causedDamageThisCycle) {
+                return;
+            }
+            
+            let currentAttackFrame = enemy.animations.currentAnim.frame;
+            let bbox = enemy.damageBounds[currentAttackFrame];
+            
+            // graphicsDebugEnemy.lineStyle(4, 0xFF00FF, 1);
+            // graphicsDebugEnemy.drawRect(
+            //     bbox.x*enemy.scale.x + enemy.body.x, 
+            //     bbox.y*enemy.scale.y + enemy.body.y, 
+            //     bbox.w*enemy.scale.x, 
+            //     bbox.h*enemy.scale.y);
+        
+            // graphicsDebugEnemy.lineStyle(4, 0xFF7700, 1);
+            // graphicsDebugEnemy.drawRect(
+            //     this.hero.body.x, this.hero.body.y, 
+            //     this.hero.body.width, this.hero.body.height);
+
+            if (this._intersectRect(
+                bbox.x*enemy.scale.x + enemy.body.x, 
+                bbox.y*enemy.scale.y + enemy.body.y, 
+                bbox.w*enemy.scale.x, 
+                bbox.h*enemy.scale.y, 
+                this.hero.body.x, this.hero.body.y, 
+                this.hero.body.width, this.hero.body.height)
+                ) {
+                // Damage!
+                
+                enemy.causedDamageThisCycle = true;
+                
+                this.hero.takeDamage();
+
+            }
+                
         }, this);
+    
+        // this.itemsFood.forEach(function (food) {
+        //     this.game.physics.arcade.collide(this.hero, food
+        //         , this._onHeroCollisionWithFood, null, null
+        //     );
+        // }, this);
     
         // collision: hero vs enemies (kill or die)
         // this.game.physics.arcade.overlap(this.hero, this.spiders,
         //     this._onHeroVsEnemy, null, this);
+
     
         // Post-collision handling:
         if (this.hero.isLedgeGrabbing || this.hero.isWallJumpPauseL || this.hero.isWallJumpPauseR) {
@@ -357,6 +401,9 @@ class PlayState {
                 this.hero.isWallJumpPauseRDuration++;
                 this.hero.wallJumpPauseRHeight = this.hero.y;
             }
+        }
+        else if (this.hero.isDead) {
+            this._RestartLevel();
         }
         else {
             this.hero.body.allowGravity = true;
@@ -416,7 +463,7 @@ class PlayState {
                 this.hero.canWallJumpR = false;
             }
         }
-        if (!this.keys.left.isDown && !this.keys.right.isDown) { // stop
+        if (!this.hero.isAlive || (!this.keys.left.isDown && !this.keys.right.isDown)) { // stop
             xDir = 0;
         }
         this.hero.move(xDir);
@@ -673,6 +720,16 @@ class PlayState {
             .to({x: this.door.x, alpha: 0}, 500, null, true)
             .onComplete.addOnce(this._goToNextLevel, this);
     }
+
+    _RestartLevel() {
+        nextLevelIncrement = 0;
+        
+        //this.game.state.start(this.game.state.current);
+        
+        //this.game.state.start('loading');
+        
+        this._goToNextLevel();
+    }
     
     _goToNextLevel() {
         this.camera.fade('#000000');
@@ -727,7 +784,7 @@ class PlayState {
                 bbox.x + this.tileWidth, 
                 bbox.y + this.tileWidth, 
                 bbox.w - (2*this.tileWidth), 
-                bbox.h - 64);            
+                bbox.h - 64);
             this.landscapeBounds.add(landItemBound);
         }, this);
     
@@ -859,7 +916,7 @@ class PlayState {
             new animationData('animationHeroSwordIdle', [38, 38, 38, 38, 38, 39, 40, 41, 38, 38, 38, 38], 4, true),
             new animationData('animationHeroSwordAttack1', [53,54,55,56,57,58], 8, false),
             new animationData('animationHeroSwordAttack2', [53,54,55,56,57,58], 8, false),
-            new animationData('die', [5, 6, 5, 6, 5, 6, 5, 6], 12)
+            new animationData('animationHeroDying', [62,63,64,65,66,67,68,68,68], 8, false)
         ];
 
         let hero2 = new Hero2(this.game, initialHeroX, initialHeroY, 'hero');
@@ -1149,8 +1206,6 @@ class PlayState {
         let totalTilesDrawn = 0;
 
         allBoxes.forEach(function (b) {
-            let tileGroup = groupsToRender[b.id];
-
             if (b.wasInView === true) {
                 // last update it was in view...
                 if (this._squareIsInView(b.x, b.y, b.w, b.h)) {
@@ -1158,7 +1213,7 @@ class PlayState {
                 }
                 else {
                     // ...but now it's not, so kill the group:
-                    tileGroup.callAll('kill');
+                    groupsToRender[b.id].callAll('kill');
                     b.wasInView = false;
                 }
             }
@@ -1167,7 +1222,7 @@ class PlayState {
                 if (this._squareIsInView(b.x, b.y, b.w, b.h)) {
                     // ...but now it is, so revive the group:
                     b.wasInView = true;
-                    tileGroup.callAll('revive');
+                    groupsToRender[b.id].callAll('revive');
                 }
                 else {
                     // ...and it's still not, so do nothing.
@@ -1229,13 +1284,25 @@ class PlayState {
     }
 
     _squareIsInView(x, y, w, h) {
-        return !(
-            x   > (this.game.camera.x + this.game.camera.width) || 
-            x+w < (this.game.camera.x) || 
-            y   > (this.game.camera.y + this.game.camera.height) ||
-            y+h < (this.game.camera.y)
+        return this._intersectRect(
+            x, y, w, h,
+            this.game.camera.x,
+            this.game.camera.y,
+            this.game.camera.width,
+            this.game.camera.height
         );
     }
+
+    _intersectRect(
+        x1, y1, w1, h1, 
+        x2, y2, w2, h2) {
+        return !(
+             x1       > (x2 + w2) || 
+            (x1 + w1) <  x2 || 
+             y1       > (y2 + h2) ||
+            (y1 + h1) <  y2
+        );
+      }
     
     _setLevelDataFromJson(data) {
         let boundW = (data.world.w < this.game.width) ? this.game.width : data.world.w;
@@ -1303,6 +1370,7 @@ class PlayState {
     }
     
     _loadLevel(data) {
+        addBackgroundToGame(this.game, 'background');
     
         // Create all the groups/layers that we need (in order, for layering):    
         this.platforms = this.game.add.group();
@@ -1322,7 +1390,11 @@ class PlayState {
         graphicsDebug = this.game.add.graphics(0, 0);
         graphicsDebug.beginFill(0xFF00FF);
         graphicsDebug.lineStyle(4, 0xFF00FF, 1);
-                    
+        
+        //graphicsDebugEnemy = this.game.add.graphics(0, 0);
+        //graphicsDebugEnemy.beginFill(0xFF00FF);
+        //graphicsDebugEnemy.lineStyle(4, 0xFF00FF, 1);
+        
         if (data.maze) {
             this._setMazeDataFromJson(data);
         }

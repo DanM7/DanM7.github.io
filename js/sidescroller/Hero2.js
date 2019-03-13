@@ -14,6 +14,7 @@ const ANIMATION_HERO_LEDGE_PULLUP = 'animationHeroLedgePullup';
 const ANIMATION_HERO_SWORD_DRAW = 'animationHeroSwordDraw';
 const ANIMATION_HERO_SWORD_IDLE = 'animationHeroSwordIdle';
 const ANIMATION_HERO_SWORD_ATTACK_1 = 'animationHeroSwordAttack1';
+const ANIMATION_HERO_DYING = 'animationHeroDying';
 
 // Note: offsetY needs to be the sprite's default height 
 // (ex. 72) - h! Like 30 & 42 or 72 & 0.
@@ -53,6 +54,7 @@ class Hero2 extends Phaser.Sprite {
         this.canWallJumpR = true;
 
         // player state:
+        this.isAlive = true;
         this.isCrouching = false;
         this.isJumpingSingle = false;
         this.isJumpingExtra = false;
@@ -93,7 +95,7 @@ class Hero2 extends Phaser.Sprite {
 
     canSingleJump() {
         return (
-            this.alive 
+            this.isAlive 
             && !this.isFrozen && (
                 this.touchingDownCount > 0 || 
                 this.isLedgeGrabbing || 
@@ -104,7 +106,7 @@ class Hero2 extends Phaser.Sprite {
     }
     canExtraJump() {
         return (
-            this.alive 
+            this.isAlive 
             && !this.isFrozen 
             && (this.extraJumpsCurrent < this.extraJumpsMax) 
             && !this.isBoosting 
@@ -186,8 +188,9 @@ class Hero2 extends Phaser.Sprite {
         let deltaX = this.body.position.x - this.body.prev.x;
     
         // dying
-        if (!this.alive) {
-            name = 'die';
+        if (!this.isAlive) {
+            name = ANIMATION_HERO_DYING;
+            func = "_heroKill";
         }
         // frozen & not dying
         else if (this.isFrozen) {
@@ -244,9 +247,17 @@ class Hero2 extends Phaser.Sprite {
         this.swordAttackSequence = 0;
     }
 
+    _heroKill() {
+        this.isDead = true;
+    }
+
     freeze() {
         this.body.enable = false;
         this.isFrozen = true;
+    }
+
+    takeDamage() {
+        this.isAlive = false;
     }
 
     //#endregion Player State
@@ -259,6 +270,8 @@ class Hero2 extends Phaser.Sprite {
         const SPEED = 200;
         this.body.velocity.x = direction * SPEED;
     
+        if (!this.isAlive) { return; }
+
         // To turn the player, flip the image with scaling;
         // flipping (or mirroring) an image is achieved by 
         // applying a negative scale to the image:

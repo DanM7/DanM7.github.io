@@ -22,12 +22,18 @@ class EnemySentry extends Phaser.Sprite {
         let heroY = somePlayer.y;
         let enemyViewX = this.x + this.aiViewX;
         let enemyViewY = this.y + this.aiViewY;
-        let currentDistance = Math.sqrt(
-            ( heroX -= enemyViewX ) * heroX + 
-            ( heroY -= enemyViewY ) * heroY 
-        );
-        if (currentDistance <= this.attackRange) {
-            if (!this.isAttacking) {
+
+        // ToDo: need to handle the player jumping over the enemy
+        // and the enemy turning to follow them in the new direction.
+        // Without this, the enemy seemingly forgets the hero after
+        // the hero runs past them...
+
+        if (!this.isAttacking) {
+            let currentDistance = Math.sqrt(
+                ( heroX -= enemyViewX ) * heroX + 
+                ( heroY -= enemyViewY ) * heroY 
+            );
+            if (currentDistance <= this.attackRange) {
                 this.attackPlayer(somePlayer);
             }
         }
@@ -56,8 +62,9 @@ class EnemySentry extends Phaser.Sprite {
         }
         let previousScaleX = this.scale.x;
 
-        this.isAttacking = true;
         this.walking = false;
+        this.isAttacking = true;
+        this.causedDamageThisCycle = false;
 
         this.previousVelocityX = this.body.velocity.x;
         this.body.velocity.x = 0;
@@ -70,6 +77,7 @@ class EnemySentry extends Phaser.Sprite {
 
         this.animations.currentAnim.onComplete.add(
             function () {
+                this.causedDamageThisCycle = false;
                 this[this.initialAnimation]();
             }, this
         );

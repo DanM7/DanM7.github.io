@@ -17,15 +17,28 @@ class EnemyFactory {
                 enemySprite.initialAnimation = badGuyJson.initialAnimation;
                 break;
         }
-        enemySprite.aiViewX = (typeof badGuyJson.aiViewX !== 'undefined') ? badGuyJson.aiViewX : 0;
-        enemySprite.aiViewY = (typeof badGuyJson.aiViewY !== 'undefined') ? badGuyJson.aiViewY : 0;
-        enemySprite.body.velocity.x = badGuyJson.velocityX;
-        enemySprite.body.y += badGuyJson.offsetY;
-        enemySprite.velocityX = badGuyJson.velocityX;
+
+        // AI:
+        enemySprite.causedDamageThisCycle = false;
+        enemySprite.aiViewX = this._isDefined(badGuyJson.aiViewX) ? badGuyJson.aiViewX : 0;
+        enemySprite.aiViewY = this._isDefined(badGuyJson.aiViewY) ? badGuyJson.aiViewY : 0;
+        enemySprite.damageBounds = this._isDefined(badGuyJson.damageBounds) ? badGuyJson.damageBounds : null;
+
+        // Animations:
         enemySprite.addAnimations(badGuyJson);
         enemySprite.spriteScale = badGuyJson.scale;
         enemySprite.scale.setTo(enemySprite.spriteScale, enemySprite.spriteScale);
         enemySprite.playAnimation(badGuyJson.initialAnimation);
+
+        // Velocity:
+        enemySprite.body.velocity.x = badGuyJson.velocityX;
+        enemySprite.body.y += badGuyJson.offsetY;
+        enemySprite.velocityX = badGuyJson.velocityX;
+
         return enemySprite;
+    }
+
+    _isDefined(someJsonField) {
+        return (typeof someJsonField !== 'undefined');
     }
 }
