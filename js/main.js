@@ -95,7 +95,7 @@ LoadingState.preload = function () {
         88, 132); // 1716/13 = 132?
     this.game.load.spritesheet('demonSkeletonKnightAttack', 
         'images/enemies/demon/skeleton_knight_attack.png', 
-        (1806/6), (777/3));
+        (1806/6), (777/3)); // 301, 259
 
     //#endregion Enemies
 
